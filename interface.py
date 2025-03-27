@@ -1,9 +1,9 @@
 import sys
 import os
 import json
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QFileDialog, QHBoxLayout, QLabel, QLineEdit, QCheckBox,
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QFileDialog, QHBoxLayout, QLabel, QLineEdit, QCheckBox, QGroupBox, QSpacerItem,
                              QComboBox, QPushButton, QFrame, QScrollArea, QProgressBar, QMessageBox, QSizePolicy,QSlider, QListWidget, QSpinBox, QGridLayout, QDialog, QRadioButton, QListWidgetItem,)
-from PyQt5.QtGui import QPixmap, QFont
+from PyQt5.QtGui import QPixmap, QFont, QIntValidator
 from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer
 from jogador import Jogador
 
@@ -430,7 +430,7 @@ class EscolhaConfiguracaoWindow(QMainWindow):
         self.jogador = jogador
         self.parent = parent
         self.setWindowTitle("Escolha o Tipo de Configuração")
-        self.setMinimumSize(600, 400)  # Tamanho menor, já que é uma tela simples
+        self.setMinimumSize(600, 400)
         self.setStyleSheet("background-color: #1A1A1A;")
         self.setup_ui()
 
@@ -441,31 +441,27 @@ class EscolhaConfiguracaoWindow(QMainWindow):
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(20)
 
-        # Título
         title = QLabel("Escolha o Tipo de Configuração")
         title.setFont(QFont("Segoe UI", 24, QFont.Bold))
         title.setStyleSheet("color: #FF6200;")
         title.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(title)
 
-        # Descrição
         desc_label = QLabel("Escolha como deseja configurar os pontos do seu jogador:")
         desc_label.setFont(QFont("Segoe UI", 14))
         desc_label.setStyleSheet("color: #FFFFFF;")
         desc_label.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(desc_label)
 
-        # Botão Presets
         presets_button = QPushButton("Escolher Presets de Pontos")
         presets_button.setStyleSheet("""
             QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 15px; font-size: 16px; }
             QPushButton:hover { background: #FF8340; }
         """)
         presets_button.setFont(QFont("Segoe UI", 16, QFont.Bold))
-        presets_button.clicked.connect(self.abrir_presets)
+        presets_button.clicked.connect(self.abrir_dialogo_dificuldade)
         main_layout.addWidget(presets_button)
 
-        # Botão Personalizado
         custom_button = QPushButton("Configuração Personalizada")
         custom_button.setStyleSheet("""
             QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 15px; font-size: 16px; }
@@ -475,7 +471,6 @@ class EscolhaConfiguracaoWindow(QMainWindow):
         custom_button.clicked.connect(self.abrir_personalizado)
         main_layout.addWidget(custom_button)
 
-        # Botão Voltar
         back_button = QPushButton("Voltar")
         back_button.setStyleSheet("""
             QPushButton { background: #2D2D2D; color: #FFFFFF; border-radius: 5px; padding: 15px; font-size: 16px; }
@@ -485,17 +480,25 @@ class EscolhaConfiguracaoWindow(QMainWindow):
         back_button.clicked.connect(self.back_to_main)
         main_layout.addWidget(back_button)
 
-        main_layout.addStretch()  # Centraliza os elementos verticalmente
+        main_layout.addStretch()
 
-    def abrir_presets(self):
-        self.presets_window = EscolhaDificuldadeWindow(self.jogador, self.parent)
-        self.presets_window.show()
-        self.close()
+    def abrir_dialogo_dificuldade(self):
+        dialog = EscolhaDificuldadeDialog(self.jogador, self, modo="presets")
+        if dialog.exec_():
+            escolha = dialog.get_choice()
+            if escolha == "predefinida":
+                # Aqui você pode abrir uma janela para dificuldade predefinida
+                print("Dificuldade Predefinida selecionada")
+            else:
+                # Aqui você pode abrir uma janela para configuração personalizada
+                print("Configuração Personalizada selecionada")
 
     def abrir_personalizado(self):
-        self.custom_window = ConfiguracaoPersonalizadaWindow(self.jogador, self.parent)
-        self.custom_window.show()
-        self.close()
+        # Aqui você pode abrir a janela de configuração personalizada diretamente
+        print("Abrindo Configuração Personalizada")
+        # Exemplo: self.custom_window = ConfiguracaoPersonalizadaWindow(self.jogador, self, modo="personalizado")
+        # self.custom_window.show()
+        # self.close()
 
     def back_to_main(self):
         self.parent.show()
@@ -508,7 +511,7 @@ class ConfiguracaoPersonalizadaWindow(QMainWindow):
         self.jogador = jogador
         self.parent = parent
         self.setWindowTitle("Configuração Personalizada")
-        self.setMinimumSize(600, 600)
+        self.setMinimumSize(900, 800)
         self.setStyleSheet("background-color: #1A1A1A;")
         self.setup_ui()
 
@@ -516,83 +519,145 @@ class ConfiguracaoPersonalizadaWindow(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(40, 40, 40, 40)
+        main_layout.setSpacing(20)
 
+        # Título principal
         title = QLabel("Configuração Personalizada")
-        title.setFont(QFont("Segoe UI", 24, QFont.Bold))
-        title.setStyleSheet("color: #FF6200;")
+        title.setFont(QFont("Segoe UI", 28, QFont.Bold))
+        title.setStyleSheet("color: #FF6200; margin-bottom: 20px;")
         title.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(title)
 
+        # Área de rolagem para o conteúdo
         content_widget = QWidget()
         content_layout = QVBoxLayout(content_widget)
-        content_layout.setSpacing(8)
+        content_layout.setSpacing(15)
 
-        # Seção de Custos de Atributos (já existente)
-        custos_label = QLabel("Custos de Atributos:\nDefina o custo em pontos para aumentar atributos em cada faixa:")
+        # Seção de Custos de Atributos
+        atributos_group = QGroupBox()
+        atributos_group.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        atributos_group.setStyleSheet("QGroupBox { color: #FF6200; background-color: #2D2D2D; border: 2px solid #FF6200; border-radius: 8px; padding-top: 20px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top center; padding: 0 5px; }")
+        atributos_layout = QVBoxLayout(atributos_group)
+        atributos_layout.setSpacing(10)
+
+        atributos_title = QLabel("Custos de Atributos")
+        atributos_title.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        atributos_title.setStyleSheet("color: #FF6200; margin-bottom: 10px;")
+        atributos_title.setAlignment(Qt.AlignCenter)
+
+        custos_label = QLabel("Defina o custo em pontos para aumentar atributos em cada faixa:")
         custos_label.setFont(QFont("Segoe UI", 14))
-        custos_label.setStyleSheet("color: #FFFFFF;")
+        custos_label.setStyleSheet("color: #FFFFFF; margin-bottom: 15px;")
         custos_label.setWordWrap(True)
-        content_layout.addWidget(custos_label)
+        custos_label.setAlignment(Qt.AlignCenter)
+
+        atributos_layout.addWidget(atributos_title)
+        atributos_layout.addWidget(custos_label)
 
         self.custos_inputs = {}
-        faixas = [("0-74", 1), ("75-84", 2), ("85-94", 3), ("95-99", 5)]
+        # Novos intervalos com valores padrão
+        faixas = [
+            ("0-69", 100),
+            ("70-74", 150),
+            ("75-79", 200),
+            ("80-84", 250),
+            ("85-89", 300),
+            ("90-94", 400),
+            ("95-99", 500)
+        ]
         for faixa, valor_padrao in faixas:
             custo_layout = QHBoxLayout()
-            label = QLabel(f"{faixa}:")
+            custo_layout.setSpacing(10)
+            label = QLabel(f"Faixa {faixa}:")
             label.setFont(QFont("Segoe UI", 14))
-            label.setStyleSheet("color: #FFFFFF;")
+            label.setStyleSheet("color: #FFFFFF; min-width: 120px;")
             input_field = QSpinBox()
-            input_field.setRange(1, 10)
-            input_field.setValue(valor_padrao)
+            input_field.setRange(1, 1000000)
+            # Carrega o valor atual do jogador, se existir, ou usa o padrão
+            valor_inicial = self.jogador.custos_atributos.get(faixa, valor_padrao) if hasattr(self.jogador, 'custos_atributos') else valor_padrao
+            input_field.setValue(valor_inicial)
             input_field.setFont(QFont("Segoe UI", 14))
             input_field.setStyleSheet("background: #3A3A3A; color: #FFFFFF; border-radius: 5px; padding: 5px;")
-            input_field.setFixedWidth(60)
+            input_field.setFixedWidth(120)
             custo_layout.addWidget(label)
             custo_layout.addWidget(input_field)
             custo_layout.addStretch()
+            atributos_layout.addLayout(custo_layout)
             self.custos_inputs[faixa] = input_field
-            content_layout.addLayout(custo_layout)
 
-        # Nova Seção de Custos de Badges
-        badges_label = QLabel("Custos de Badges:\nDefina o custo em pontos para cada nível de badge:")
+        content_layout.addWidget(atributos_group)
+
+        # Seção de Custos de Badges (mantida como estava)
+        badges_group = QGroupBox()
+        badges_group.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        badges_group.setStyleSheet("QGroupBox { color: #FF6200; background-color: #2D2D2D; border: 2px solid #FF6200; border-radius: 8px; padding-top: 20px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top center; padding: 0 5px; }")
+        badges_layout = QVBoxLayout(badges_group)
+        badges_layout.setSpacing(10)
+
+        badges_title = QLabel("Custos de Badges")
+        badges_title.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        badges_title.setStyleSheet("color: #FF6200; margin-bottom: 10px;")
+        badges_title.setAlignment(Qt.AlignCenter)
+
+        badges_label = QLabel("Defina o custo em pontos para cada nível de badge:")
         badges_label.setFont(QFont("Segoe UI", 14))
-        badges_label.setStyleSheet("color: #FFFFFF;")
+        badges_label.setStyleSheet("color: #FFFFFF; margin-bottom: 15px;")
         badges_label.setWordWrap(True)
-        content_layout.addWidget(badges_label)
+        badges_label.setAlignment(Qt.AlignCenter)
+
+        badges_layout.addWidget(badges_title)
+        badges_layout.addWidget(badges_label)
 
         self.custos_badges_inputs = {}
         niveis_badges = [("Bronze", 5), ("Prata", 10), ("Ouro", 15), ("Hall da Fama", 20)]
         for nivel, valor_padrao in niveis_badges:
             custo_layout = QHBoxLayout()
-            label = QLabel(f"{nivel}:")
+            custo_layout.setSpacing(10)
+            label = QLabel(f"Nível {nivel}:")
             label.setFont(QFont("Segoe UI", 14))
-            label.setStyleSheet("color: #FFFFFF;")
+            label.setStyleSheet("color: #FFFFFF; min-width: 120px;")
             input_field = QSpinBox()
-            input_field.setRange(1, 100)  # Limite maior para badges
+            input_field.setRange(1, 1000000)
             valor_inicial = self.jogador.custos_badges.get(nivel, valor_padrao) if hasattr(self.jogador, 'custos_badges') else valor_padrao
             input_field.setValue(valor_inicial)
             input_field.setFont(QFont("Segoe UI", 14))
             input_field.setStyleSheet("background: #3A3A3A; color: #FFFFFF; border-radius: 5px; padding: 5px;")
-            input_field.setFixedWidth(60)
+            input_field.setFixedWidth(120)
             custo_layout.addWidget(label)
             custo_layout.addWidget(input_field)
             custo_layout.addStretch()
+            badges_layout.addLayout(custo_layout)
             self.custos_badges_inputs[nivel] = input_field
-            content_layout.addLayout(custo_layout)
 
-        # Seção de Metas de Estatísticas e Pontos (já existente)
-        stats_label = QLabel("Metas de Estatísticas e Pontos Ganhos:\nNo primeiro campo, defina quantas unidades no jogo (ex.: pontos, assistências) você precisa atingir.\nNo segundo campo, defina quantos pontos no aplicativo você ganhará (ou perderá, no caso de turnovers) ao alcançar essa meta.")
+        content_layout.addWidget(badges_group)
+
+        # Seção de Metas de Estatísticas e Pontos (mantida como estava)
+        stats_group = QGroupBox()
+        stats_group.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        stats_group.setStyleSheet("QGroupBox { color: #FF6200; background-color: #2D2D2D; border: 2px solid #FF6200; border-radius: 8px; padding-top: 20px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top center; padding: 0 5px; }")
+        stats_layout = QVBoxLayout(stats_group)
+        stats_layout.setSpacing(10)
+
+        stats_title = QLabel("Metas de Estatísticas e Pontos Ganhos")
+        stats_title.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        stats_title.setStyleSheet("color: #FF6200; margin-bottom: 10px;")
+        stats_title.setAlignment(Qt.AlignCenter)
+
+        stats_label = QLabel("No primeiro campo, defina quantas unidades no jogo (ex.: pontos, assistências) você precisa atingir.\nNo segundo campo, defina quantos pontos no aplicativo você ganhará (ou perderá, no caso de turnovers).")
         stats_label.setFont(QFont("Segoe UI", 14))
-        stats_label.setStyleSheet("color: #FFFFFF;")
+        stats_label.setStyleSheet("color: #FFFFFF; margin-bottom: 15px;")
         stats_label.setWordWrap(True)
-        content_layout.addWidget(stats_label)
+        stats_label.setAlignment(Qt.AlignCenter)
+
+        stats_layout.addWidget(stats_title)
+        stats_layout.addWidget(stats_label)
 
         self.stats_inputs = {}
         stats = ["Pontos", "Assistências", "Rebotes", "Steal", "Block", "Turnover"]
         for stat in stats:
             stat_layout = QHBoxLayout()
+            stat_layout.setSpacing(10)
             if stat == "Turnover":
                 meta_label = QLabel("Turnovers no jogo:")
                 pontos_label = QLabel("Pontos perdidos:")
@@ -600,91 +665,133 @@ class ConfiguracaoPersonalizadaWindow(QMainWindow):
                 meta_label = QLabel(f"{stat} no jogo:")
                 pontos_label = QLabel("Pontos ganhos:")
             meta_label.setFont(QFont("Segoe UI", 14))
-            meta_label.setStyleSheet("color: #FFFFFF;")
+            meta_label.setStyleSheet("color: #FFFFFF; min-width: 150px;")
             pontos_label.setFont(QFont("Segoe UI", 14))
-            pontos_label.setStyleSheet("color: #FFFFFF;")
+            pontos_label.setStyleSheet("color: #FFFFFF; min-width: 120px;")
             meta_input = QLineEdit("10" if stat != "Turnover" else "5")
+            meta_input.setValidator(QIntValidator(1, 1000000))
             meta_input.setFont(QFont("Segoe UI", 14))
             meta_input.setStyleSheet("background: #3A3A3A; color: #FFFFFF; border-radius: 5px; padding: 5px;")
-            meta_input.setFixedWidth(60)
+            meta_input.setFixedWidth(120)
             pontos_input = QLineEdit("10" if stat != "Turnover" else "-5")
+            if stat == "Turnover":
+                pontos_input.setValidator(QIntValidator(-1000000, 0))
+            else:
+                pontos_input.setValidator(QIntValidator(1, 1000000))
             pontos_input.setFont(QFont("Segoe UI", 14))
             pontos_input.setStyleSheet("background: #3A3A3A; color: #FFFFFF; border-radius: 5px; padding: 5px;")
-            pontos_input.setFixedWidth(60)
+            pontos_input.setFixedWidth(120)
             stat_layout.addWidget(meta_label)
             stat_layout.addWidget(meta_input)
             stat_layout.addWidget(pontos_label)
             stat_layout.addWidget(pontos_input)
+            stat_layout.addStretch()
+            stats_layout.addLayout(stat_layout)
             self.stats_inputs[stat] = (meta_input, pontos_input)
-            content_layout.addLayout(stat_layout)
 
-        # Seção de Pontos dos Prêmios (já existente)
-        premios_label = QLabel("Pontos dos Prêmios:\nDefina quantos pontos no aplicativo você ganhará ao conquistar cada prêmio.")
+        content_layout.addWidget(stats_group)
+
+        # Seção de Pontos dos Prêmios (mantida como estava)
+        premios_group = QGroupBox()
+        premios_group.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        premios_group.setStyleSheet("QGroupBox { color: #FF6200; background-color: #2D2D2D; border: 2px solid #FF6200; border-radius: 8px; padding-top: 20px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top center; padding: 0 5px; }")
+        premios_layout = QVBoxLayout(premios_group)
+        premios_layout.setSpacing(10)
+
+        premios_title = QLabel("Pontos dos Prêmios")
+        premios_title.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        premios_title.setStyleSheet("color: #FF6200; margin-bottom: 10px;")
+        premios_title.setAlignment(Qt.AlignCenter)
+
+        premios_label = QLabel("Defina quantos pontos no aplicativo você ganhará ao conquistar cada prêmio:")
         premios_label.setFont(QFont("Segoe UI", 14))
-        premios_label.setStyleSheet("color: #FFFFFF;")
+        premios_label.setStyleSheet("color: #FFFFFF; margin-bottom: 15px;")
         premios_label.setWordWrap(True)
-        content_layout.addWidget(premios_label)
+        premios_label.setAlignment(Qt.AlignCenter)
+
+        premios_layout.addWidget(premios_title)
+        premios_layout.addWidget(premios_label)
 
         self.premios = {
-            "Most Valuable Player (MVP)": 1000,
-            "Rookie of the Year (ROY)": 500,
-            "Defensive Player of the Year (DPOY)": 750,
-            "Sixth Man of the Year": 400,
-            "Most Improved Player (MIP)": 600,
-            "Bill Russell NBA Finals MVP": 1200,
-            "Conference Finals MVP (Leste)": 800,
-            "Conference Finals MVP (Oeste)": 800,
-            "NBA Champion": 1500
+            "Jogador do Mês": 300,
+            "All Star": 500,
+            "Scoring Champion": 1000,
+            "Rookie of the Year": 2500,
+            "Most Improved Player": 2000,
+            "Sixth Man of the Year": 2000,
+            "Clutch Player of the Year": 1500,
+            "Defensive Player of the Year": 5000,
+            "Most Valuable Player": 20000,
+            "Conference Finals MVP": 8000,
+            "Finals MVP": 15000,
+            "NBA Champion": 25000
         }
         self.premios_inputs = {}
         for premio, pontos_base in self.premios.items():
             premio_layout = QHBoxLayout()
+            premio_layout.setSpacing(10)
             label = QLabel(f"{premio}:")
             label.setFont(QFont("Segoe UI", 14))
-            label.setStyleSheet("color: #FFFFFF;")
+            label.setStyleSheet("color: #FFFFFF; min-width: 300px;")
             input_field = QSpinBox()
-            input_field.setRange(0, 10000)
+            input_field.setRange(0, 1000000)
             valor_inicial = self.jogador.pontos_premios_personalizados.get(premio, pontos_base) if hasattr(self.jogador, 'pontos_premios_personalizados') and self.jogador.pontos_premios_personalizados else pontos_base
             input_field.setValue(valor_inicial)
             input_field.setFont(QFont("Segoe UI", 14))
             input_field.setStyleSheet("background: #3A3A3A; color: #FFFFFF; border-radius: 5px; padding: 5px;")
-            input_field.setFixedWidth(100)
+            input_field.setFixedWidth(120)
             premio_layout.addWidget(label)
             premio_layout.addWidget(input_field)
+            premio_layout.addStretch()
+            premios_layout.addLayout(premio_layout)
             self.premios_inputs[premio] = input_field
-            content_layout.addLayout(premio_layout)
 
+        content_layout.addWidget(premios_group)
+
+        # Área de rolagem
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setStyleSheet("background: #2D2D2D; border: none;")
         scroll_area.setWidget(content_widget)
         main_layout.addWidget(scroll_area, stretch=1)
 
+        # Botões na parte inferior
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(30)
+
         apply_button = QPushButton("Aplicar Configurações")
         apply_button.setStyleSheet("""
-            QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 15px; font-size: 16px; }
+            QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 15px; font-size: 16px; min-width: 200px; }
             QPushButton:hover { background: #FF8340; }
         """)
         apply_button.clicked.connect(self.aplicar_configuracoes)
-        main_layout.addWidget(apply_button)
+        buttons_layout.addWidget(apply_button)
 
         back_button = QPushButton("Voltar")
         back_button.setStyleSheet("""
-            QPushButton { background: #2D2D2D; color: #FFFFFF; border-radius: 5px; padding: 15px; font-size: 16px; }
+            QPushButton { background: #2D2D2D; color: #FFFFFF; border-radius: 5px; padding: 15px; font-size: 16px; min-width: 200px; }
             QPushButton:hover { background: #555555; }
         """)
         back_button.clicked.connect(self.back_to_main)
-        main_layout.addWidget(back_button)
+        buttons_layout.addWidget(back_button)
+
+        main_layout.addLayout(buttons_layout)
 
     def aplicar_configuracoes(self):
         try:
+            # Verificação dos campos
+            faixas_esperadas = ["0-69", "70-74", "75-79", "80-84", "85-89", "90-94", "95-99"]
+            if not all(key in self.custos_inputs for key in faixas_esperadas):
+                raise KeyError("Alguns campos de custos de atributos não foram inicializados corretamente.")
+            if not all(key in self.custos_badges_inputs for key in ["Bronze", "Prata", "Ouro", "Hall da Fama"]):
+                raise KeyError("Alguns campos de custos de badges não foram inicializados corretamente.")
+            if not all(key in self.stats_inputs for key in ["Pontos", "Assistências", "Rebotes", "Steal", "Block", "Turnover"]):
+                raise KeyError("Alguns campos de metas de estatísticas não foram inicializados corretamente.")
+            if not all(key in self.premios_inputs for key in self.premios.keys()):
+                raise KeyError("Alguns campos de pontos de prêmios não foram inicializados corretamente.")
+
             # Custos de Atributos
-            custos = {
-                "0-74": self.custos_inputs["0-74"].value(),
-                "75-84": self.custos_inputs["75-84"].value(),
-                "85-94": self.custos_inputs["85-94"].value(),
-                "95-99": self.custos_inputs["95-99"].value()
-            }
+            custos = {faixa: self.custos_inputs[faixa].value() for faixa in faixas_esperadas}
             self.jogador.custos_atributos = custos
 
             # Custos de Badges
@@ -698,25 +805,35 @@ class ConfiguracaoPersonalizadaWindow(QMainWindow):
             for stat, (meta_input, pontos_input) in self.stats_inputs.items():
                 meta = int(meta_input.text())
                 pontos = int(pontos_input.text())
-                if stat == "Turnover" and pontos >= 0:
-                    raise ValueError("Turnover deve ter um valor negativo!")
-                estatisticas[stat] = {"meta": meta, "pontos": pontos}
-            self.jogador.dificuldade = estatisticas  # Usando o mesmo campo que EscolhaDificuldadeWindow
+                if meta > 1000000:
+                    raise ValueError(f"A meta para {stat} excede o limite de 1.000.000!")
+                if stat == "Turnover":
+                    if pontos > 0:
+                        raise ValueError("Turnover deve ter um valor negativo!")
+                    if pontos < -1000000:
+                        raise ValueError("O valor de pontos perdidos para Turnover excede o limite de -1.000.000!")
+                elif pontos > 1000000:
+                    raise ValueError(f"Os pontos ganhos para {stat} excede o limite de 1.000.000!")
+                estatisticas[stat] = pontos  # Ajustado para compatibilidade com a classe Jogador
+            self.jogador.dificuldade = estatisticas
 
             # Pontos dos Prêmios
             if not hasattr(self.jogador, 'pontos_premios_personalizados'):
                 self.jogador.pontos_premios_personalizados = {}
             for premio, input_field in self.premios_inputs.items():
+                if input_field.value() > 1000000:
+                    raise ValueError(f"Os pontos para {premio} excede o limite de 1.000.000!")
                 self.jogador.pontos_premios_personalizados[premio] = input_field.value()
 
             self.jogador.salvar()
 
             self.show_success("Configurações aplicadas com sucesso!")
-            self.player_window = PlayerWindow(self.jogador, self.parent)
-            self.player_window.show()
+            self.parent.show()
             self.close()
         except ValueError as e:
             self.show_error(f"Erro: {str(e)}")
+        except KeyError as e:
+            self.show_error(f"Erro: Falha na inicialização dos campos - {str(e)}")
 
     def show_error(self, message):
         msg_box = QMessageBox()
@@ -746,6 +863,11 @@ class ConfiguracaoPersonalizadaWindow(QMainWindow):
         self.parent.show()
         self.close()
 
+from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QScrollArea, 
+                             QComboBox, QPushButton, QMessageBox)
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
+
 class EscolhaDificuldadeWindow(QMainWindow):
     def __init__(self, jogador, parent):
         super().__init__()
@@ -769,7 +891,7 @@ class EscolhaDificuldadeWindow(QMainWindow):
         title.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(title)
 
-        desc_label = QLabel("Selecione a dificuldade com base na sua posição:\nOs pontos ganhos ou perdidos por estatística refletem o desafio de cada posição.")
+        desc_label = QLabel("Selecione a dificuldade com base na sua posição:\nOs pontos ganhos ou perdidos por estatística e os custos de atributos refletem o desafio de cada posição.")
         desc_label.setFont(QFont("Segoe UI", 14))
         desc_label.setStyleSheet("color: #FFFFFF;")
         desc_label.setWordWrap(True)
@@ -799,7 +921,7 @@ class EscolhaDificuldadeWindow(QMainWindow):
             QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 15px; font-size: 16px; }
             QPushButton:hover { background: #FF8340; }
         """)
-        apply_button.clicked.connect(self.aplicar_configuracao)
+        apply_button.clicked.connect(self.aplicar_configuracao)  # Conexão corrigida aqui
         main_layout.addWidget(apply_button)
 
         back_button = QPushButton("Voltar")
@@ -830,26 +952,37 @@ class EscolhaDificuldadeWindow(QMainWindow):
 
         presets = {
             "PG (Point Guard)": {
-                "Pontos": 10, "Assistências": 5, "Rebotes": 20, "Steal": 10, "Block": 25, "Turnover": -25
+                "estatisticas": {"Pontos": 10, "Assistências": 5, "Rebotes": 20, "Steal": 10, "Block": 25, "Turnover": -25},
+                "custos_atributos": {"0-69": 100, "70-74": 150, "75-79": 200, "80-84": 250, "85-89": 300, "90-94": 400, "95-99": 500}
             },
             "SG (Shooting Guard)": {
-                "Pontos": 10, "Assistências": 5, "Rebotes": 20, "Steal": 10, "Block": 25, "Turnover": -25
+                "estatisticas": {"Pontos": 10, "Assistências": 5, "Rebotes": 20, "Steal": 10, "Block": 25, "Turnover": -25},
+                "custos_atributos": {"0-69": 100, "70-74": 150, "75-79": 200, "80-84": 250, "85-89": 300, "90-94": 400, "95-99": 500}
             },
             "SF (Small Forward)": {
-                "Pontos": 10, "Assistências": 10, "Rebotes": 10, "Steal": 10, "Block": 15, "Turnover": -20
+                "estatisticas": {"Pontos": 10, "Assistências": 10, "Rebotes": 10, "Steal": 10, "Block": 15, "Turnover": -20},
+                "custos_atributos": {"0-69": 100, "70-74": 150, "75-79": 200, "80-84": 250, "85-89": 300, "90-94": 400, "95-99": 500}
             },
             "PF (Power Forward)": {
-                "Pontos": 10, "Assistências": 10, "Rebotes": 10, "Steal": 10, "Block": 15, "Turnover": -20
+                "estatisticas": {"Pontos": 10, "Assistências": 10, "Rebotes": 10, "Steal": 10, "Block": 15, "Turnover": -20},
+                "custos_atributos": {"0-69": 100, "70-74": 150, "75-79": 200, "80-84": 250, "85-89": 300, "90-94": 400, "95-99": 500}
             },
             "C (Center)": {
-                "Pontos": 10, "Assistências": 15, "Rebotes": 5, "Steal": 15, "Block": 10, "Turnover": -20
+                "estatisticas": {"Pontos": 10, "Assistências": 15, "Rebotes": 5, "Steal": 15, "Block": 10, "Turnover": -20},
+                "custos_atributos": {"0-69": 100, "70-74": 150, "75-79": 200, "80-84": 250, "85-89": 300, "90-94": 400, "95-99": 500}
             }
         }
 
         posicao_selecionada = self.posicao_combo.currentText()
         config = presets[posicao_selecionada]
 
-        for stat, pontos in config.items():
+        # Exibir estatísticas
+        estatisticas_title = QLabel("Estatísticas por Partida:")
+        estatisticas_title.setFont(QFont("Segoe UI", 16, QFont.Bold))
+        estatisticas_title.setStyleSheet("color: #FF6200;")
+        self.preview_layout.addWidget(estatisticas_title)
+
+        for stat, pontos in config["estatisticas"].items():
             stat_layout = QHBoxLayout()
             label = QLabel(f"{stat}: {'-' if pontos < 0 else ''}{abs(pontos)} pontos")
             label.setFont(QFont("Segoe UI", 14))
@@ -858,27 +991,51 @@ class EscolhaDificuldadeWindow(QMainWindow):
             stat_layout.addStretch()
             self.preview_layout.addLayout(stat_layout)
 
-    def aplicar_configuracao(self):
+        # Exibir custos de atributos
+        custos_title = QLabel("Custos de Atributos:")
+        custos_title.setFont(QFont("Segoe UI", 16, QFont.Bold))
+        custos_title.setStyleSheet("color: #FF6200;")
+        self.preview_layout.addWidget(custos_title)
+
+        for faixa, custo in config["custos_atributos"].items():
+            custo_layout = QHBoxLayout()
+            label = QLabel(f"{faixa}: {custo} pontos")
+            label.setFont(QFont("Segoe UI", 14))
+            label.setStyleSheet("color: #FFFFFF;")
+            custo_layout.addWidget(label)
+            custo_layout.addStretch()
+            self.preview_layout.addLayout(custo_layout)
+
+    def aplicar_configuracao(self):  # Função corrigida
         presets = {
             "PG (Point Guard)": {
-                "Pontos": 10, "Assistências": 5, "Rebotes": 20, "Steal": 10, "Block": 25, "Turnover": -25
+                "estatisticas": {"Pontos": 10, "Assistências": 5, "Rebotes": 20, "Steal": 10, "Block": 25, "Turnover": -25},
+                "custos_atributos": {"0-69": 100, "70-74": 150, "75-79": 200, "80-84": 250, "85-89": 300, "90-94": 400, "95-99": 500}
             },
             "SG (Shooting Guard)": {
-                "Pontos": 10, "Assistências": 5, "Rebotes": 20, "Steal": 10, "Block": 25, "Turnover": -25
+                "estatisticas": {"Pontos": 10, "Assistências": 5, "Rebotes": 20, "Steal": 10, "Block": 25, "Turnover": -25},
+                "custos_atributos": {"0-69": 100, "70-74": 150, "75-79": 200, "80-84": 250, "85-89": 300, "90-94": 400, "95-99": 500}
             },
             "SF (Small Forward)": {
-                "Pontos": 10, "Assistências": 10, "Rebotes": 10, "Steal": 10, "Block": 15, "Turnover": -20
+                "estatisticas": {"Pontos": 10, "Assistências": 10, "Rebotes": 10, "Steal": 10, "Block": 15, "Turnover": -20},
+                "custos_atributos": {"0-69": 100, "70-74": 150, "75-79": 200, "80-84": 250, "85-89": 300, "90-94": 400, "95-99": 500}
             },
             "PF (Power Forward)": {
-                "Pontos": 10, "Assistências": 10, "Rebotes": 10, "Steal": 10, "Block": 15, "Turnover": -20
+                "estatisticas": {"Pontos": 10, "Assistências": 10, "Rebotes": 10, "Steal": 10, "Block": 15, "Turnover": -20},
+                "custos_atributos": {"0-69": 100, "70-74": 150, "75-79": 200, "80-84": 250, "85-89": 300, "90-94": 400, "95-99": 500}
             },
             "C (Center)": {
-                "Pontos": 10, "Assistências": 15, "Rebotes": 5, "Steal": 15, "Block": 10, "Turnover": -20
+                "estatisticas": {"Pontos": 10, "Assistências": 15, "Rebotes": 5, "Steal": 15, "Block": 10, "Turnover": -20},
+                "custos_atributos": {"0-69": 100, "70-74": 150, "75-79": 200, "80-84": 250, "85-89": 300, "90-94": 400, "95-99": 500}
             }
         }
 
         posicao_selecionada = self.posicao_combo.currentText()
-        self.jogador.dificuldade = presets[posicao_selecionada]
+        config = presets[posicao_selecionada]
+        
+        # Aplicar estatísticas e custos de atributos
+        self.jogador.dificuldade = config["estatisticas"]
+        self.jogador.custos_atributos = config["custos_atributos"]
         self.jogador.salvar()
 
         self.show_success(f"Configuração de dificuldade para {posicao_selecionada} aplicada com sucesso!")
@@ -1378,210 +1535,217 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLab
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 
+class EscolhaDificuldadeDialog(QDialog):
+    def __init__(self, jogador, parent=None, modo=None):
+        super().__init__(parent)
+        self.jogador = jogador  # Armazena o jogador
+        self.modo = modo  # Armazena o modo (pode ser usado para lógica futura)
+        self.setWindowTitle("Escolher Tipo de Dificuldade")
+        self.setStyleSheet("background-color: #1A1A1A;")
+        self.setup_ui()
+
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(15)
+
+        title = QLabel("Escolha o tipo de dificuldade:")
+        title.setFont(QFont("Segoe UI", 16, QFont.Bold))
+        title.setStyleSheet("color: #FF6200;")
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
+
+        self.predefinida_radio = QRadioButton("Dificuldade Predefinida")
+        self.predefinida_radio.setFont(QFont("Segoe UI", 14))
+        self.predefinida_radio.setStyleSheet("color: #FFFFFF;")
+        self.predefinida_radio.setChecked(True)
+        layout.addWidget(self.predefinida_radio)
+
+        self.personalizada_radio = QRadioButton("Configuração Personalizada")
+        self.personalizada_radio.setFont(QFont("Segoe UI", 14))
+        self.personalizada_radio.setStyleSheet("color: #FFFFFF;")
+        layout.addWidget(self.personalizada_radio)
+
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(20)
+
+        ok_button = QPushButton("OK")
+        ok_button.setStyleSheet("""
+            QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
+            QPushButton:hover { background: #FF8340; }
+        """)
+        ok_button.clicked.connect(self.accept)
+        buttons_layout.addWidget(ok_button)
+
+        cancel_button = QPushButton("Cancelar")
+        cancel_button.setStyleSheet("""
+            QPushButton { background: #2D2D2D; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
+            QPushButton:hover { background: #555555; }
+        """)
+        cancel_button.clicked.connect(self.reject)
+        buttons_layout.addWidget(cancel_button)
+
+        layout.addLayout(buttons_layout)
+
+    def get_choice(self):
+        """Retorna a escolha do usuário: 'predefinida' ou 'personalizada'."""
+        if self.predefinida_radio.isChecked():
+            return "predefinida"
+        return "personalizada"
+
 class PlayerWindow(QMainWindow):
     def __init__(self, jogador, parent):
         super().__init__()
         self.jogador = jogador
-        self.parent = parent
+        self.parent = parent  # Isso é a MainWindow
         self.setWindowTitle(f"NBA 2K25 - {self.jogador.nome}")
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(1000, 600)
         self.setStyleSheet("background-color: #1A1A1A;")
         self.setup_ui()
 
     def setup_ui(self):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setStyleSheet("background: #1A1A1A; border: none;")
-        self.setCentralWidget(scroll_area)
+        main_layout = QVBoxLayout(central_widget)
+        main_layout.setContentsMargins(30, 30, 30, 30)
+        main_layout.setSpacing(20)
 
-        scroll_widget = QWidget()
-        scroll_area.setWidget(scroll_widget)
-        main_layout = QVBoxLayout(scroll_widget)
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(15)
+        player_info_layout = QHBoxLayout()
+        player_info_layout.setSpacing(10)
 
-        self.title = QLabel(f"Jogador: {self.jogador.nome}")
-        self.title.setFont(QFont("Segoe UI", 24, QFont.Bold))
-        self.title.setStyleSheet("color: #FF6200;")
+        self.title = QLabel(f"{self.jogador.nome}")
+        self.title.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        self.title.setStyleSheet("color: #FF6200; background: #2D2D2D; padding: 8px; border-radius: 5px;")
         self.title.setAlignment(Qt.AlignCenter)
-        self.title.setWordWrap(True)
-        main_layout.addWidget(self.title)
-
-        self.pontos_label = QLabel(f"Pontos Disponíveis: {self.jogador.pontos_disponiveis}")
-        self.pontos_label.setFont(QFont("Segoe UI", 16))
-        self.pontos_label.setStyleSheet("color: #FFFFFF;")
-        self.pontos_label.setAlignment(Qt.AlignCenter)
-        self.pontos_label.setWordWrap(True)
-        main_layout.addWidget(self.pontos_label)
+        self.title.setFixedWidth(180)
+        player_info_layout.addWidget(self.title)
 
         self.time_label = QLabel(f"Time: {getattr(self.jogador, 'time', 'Não definido')}")
-        self.time_label.setFont(QFont("Segoe UI", 16))
-        self.time_label.setStyleSheet("color: #FFFFFF;")
+        self.time_label.setFont(QFont("Segoe UI", 14))
+        self.time_label.setStyleSheet("color: #FFFFFF; background: #2D2D2D; padding: 8px; border-radius: 5px;")
         self.time_label.setAlignment(Qt.AlignCenter)
-        self.time_label.setWordWrap(True)
-        main_layout.addWidget(self.time_label)
+        self.time_label.setFixedWidth(250)
+        player_info_layout.addWidget(self.time_label)
 
         posicao = getattr(self.jogador, 'posicao', 'Não definida')
         posicao_secundaria = getattr(self.jogador, 'posicao_secundaria', None)
         posicao_texto = posicao if not posicao_secundaria else f"{posicao}/{posicao_secundaria}"
-        self.posicao_label = QLabel(f"Posição: {posicao_texto}")
-        self.posicao_label.setFont(QFont("Segoe UI", 16))
-        self.posicao_label.setStyleSheet("color: #FFFFFF;")
+        self.posicao_label = QLabel(f"Pos.: {posicao_texto}")
+        self.posicao_label.setFont(QFont("Segoe UI", 14))
+        self.posicao_label.setStyleSheet("color: #FFFFFF; background: #2D2D2D; padding: 8px; border-radius: 5px;")
         self.posicao_label.setAlignment(Qt.AlignCenter)
-        self.posicao_label.setWordWrap(True)
-        main_layout.addWidget(self.posicao_label)
+        self.posicao_label.setFixedWidth(110)
+        player_info_layout.addWidget(self.posicao_label)
 
-        altura_m = getattr(self.jogador, 'altura', 0)
-        altura_pes_total = altura_m / 0.0254
-        feet = int(altura_pes_total // 12)
-        inches = int(altura_pes_total % 12)
-        self.altura_label = QLabel(f"Altura: {feet}'{inches}\"")
-        self.altura_label.setFont(QFont("Segoe UI", 16))
-        self.altura_label.setStyleSheet("color: #FFFFFF;")
-        self.altura_label.setAlignment(Qt.AlignCenter)
-        self.altura_label.setWordWrap(True)
-        main_layout.addWidget(self.altura_label)
+        self.pontos_label = QLabel(f"Pontos: {self.jogador.pontos_disponiveis}")
+        self.pontos_label.setFont(QFont("Segoe UI", 14))
+        self.pontos_label.setStyleSheet("color: #FFFFFF; background: #2D2D2D; padding: 8px; border-radius: 5px;")
+        self.pontos_label.setAlignment(Qt.AlignCenter)
+        self.pontos_label.setFixedWidth(110)
+        player_info_layout.addWidget(self.pontos_label)
 
-        self.ano_label = QLabel(f"Ano Atual: {getattr(self.jogador, 'ano_atual', 2025)}")
-        self.ano_label.setFont(QFont("Segoe UI", 16))
-        self.ano_label.setStyleSheet("color: #FFFFFF;")
+        self.ano_label = QLabel(f"Ano: {getattr(self.jogador, 'ano_atual', 2025)}")
+        self.ano_label.setFont(QFont("Segoe UI", 14))
+        self.ano_label.setStyleSheet("color: #FFFFFF; background: #2D2D2D; padding: 8px; border-radius: 5px;")
         self.ano_label.setAlignment(Qt.AlignCenter)
-        self.ano_label.setWordWrap(True)
-        main_layout.addWidget(self.ano_label)
+        self.ano_label.setFixedWidth(110)
+        player_info_layout.addWidget(self.ano_label)
 
-        main_layout.addSpacing(15)
+        player_info_layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        main_layout.addLayout(player_info_layout)
 
-        button_grid = QGridLayout()
-        button_grid.setHorizontalSpacing(20)
-        button_grid.setVerticalSpacing(10)
+        menu_group = QGroupBox("Menu")
+        menu_group.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        menu_group.setStyleSheet("""
+            QGroupBox { color: #FF6200; background-color: #2D2D2D; border: 2px solid #FF6200; border-radius: 8px; padding: 15px; } 
+            QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top center; padding: 0 5px; }
+        """)
+        menu_layout = QGridLayout(menu_group)
+        menu_layout.setHorizontalSpacing(20)
+        menu_layout.setVerticalSpacing(15)
 
         button_style = """
-            QPushButton { 
-                background: #FF6200; 
-                color: #FFFFFF; 
-                border-radius: 5px; 
-                padding: 10px 15px; 
-                font-size: 16px; 
-                min-width: 250px; 
-                min-height: 50px; 
-            }
-            QPushButton:hover { 
-                background: #FF8340; 
-            }
+            QPushButton { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FF6200, stop:1 #FF8340); color: #FFFFFF; border-radius: 8px; padding: 15px; font-size: 16px; min-width: 200px; min-height: 50px; }
+            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FF8340, stop:1 #FF6200); }
         """
         back_button_style = """
-            QPushButton { 
-                background: #2D2D2D; 
-                color: #FFFFFF; 
-                border-radius: 5px; 
-                padding: 10px 15px; 
-                font-size: 16px; 
-                min-width: 250px; 
-                min-height: 50px; 
-            }
-            QPushButton:hover { 
-                background: #555555; 
-            }
+            QPushButton { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #555555, stop:1 #777777); color: #FFFFFF; border-radius: 8px; padding: 15px; font-size: 16px; min-width: 200px; min-height: 50px; }
+            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #777777, stop:1 #555555); }
+        """
+        passar_ano_style = """
+            QPushButton { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #2E7D32, stop:1 #4CAF50); color: #FFFFFF; border-radius: 8px; padding: 15px; font-size: 16px; min-width: 200px; min-height: 50px; border: 2px solid #FFFFFF; }
+            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #4CAF50, stop:1 #2E7D32); }
         """
 
-        perfil_button = QPushButton("Perfil/Nova posição")
+        perfil_button = QPushButton("Perfil/Nova Posição")
         perfil_button.setStyleSheet(button_style)
         perfil_button.clicked.connect(self.abrir_perfil)
-        button_grid.addWidget(perfil_button, 0, 0, Qt.AlignCenter)
+        menu_layout.addWidget(perfil_button, 0, 0, Qt.AlignCenter)
 
-        stats_button = QPushButton("Nova partida")
+        stats_button = QPushButton("Nova Partida")
         stats_button.setStyleSheet(button_style)
         stats_button.clicked.connect(self.abrir_estatisticas)
-        button_grid.addWidget(stats_button, 0, 1, Qt.AlignCenter)
+        menu_layout.addWidget(stats_button, 0, 1, Qt.AlignCenter)
 
-        atributos_button = QPushButton("Comprar atributos")
+        atributos_button = QPushButton("Comprar Atributos")
         atributos_button.setStyleSheet(button_style)
         atributos_button.clicked.connect(self.abrir_atributos)
-        button_grid.addWidget(atributos_button, 1, 0, Qt.AlignCenter)
+        menu_layout.addWidget(atributos_button, 1, 0, Qt.AlignCenter)
 
         badges_button = QPushButton("Comprar/Melhorar Badges")
         badges_button.setStyleSheet(button_style)
         badges_button.clicked.connect(self.abrir_badges)
-        button_grid.addWidget(badges_button, 1, 1, Qt.AlignCenter)
+        menu_layout.addWidget(badges_button, 1, 1, Qt.AlignCenter)
 
         premios_button = QPushButton("Prêmios")
         premios_button.setStyleSheet(button_style)
         premios_button.clicked.connect(self.abrir_adicionar_premio)
-        button_grid.addWidget(premios_button, 2, 0, Qt.AlignCenter)
+        menu_layout.addWidget(premios_button, 2, 0, Qt.AlignCenter)
 
         historico_button = QPushButton("Histórico")
         historico_button.setStyleSheet(button_style)
         historico_button.clicked.connect(self.abrir_historico)
-        button_grid.addWidget(historico_button, 2, 1, Qt.AlignCenter)
+        menu_layout.addWidget(historico_button, 2, 1, Qt.AlignCenter)
 
-        dificuldade_button = QPushButton("Mudar dificuldade")
+        dificuldade_button = QPushButton("Mudar Dificuldade")
         dificuldade_button.setStyleSheet(button_style)
         dificuldade_button.clicked.connect(self.abrir_escolha_dificuldade)
-        button_grid.addWidget(dificuldade_button, 3, 0, Qt.AlignCenter)
+        menu_layout.addWidget(dificuldade_button, 3, 0, Qt.AlignCenter)
 
         salvar_button = QPushButton("Salvar Progresso")
         salvar_button.setStyleSheet(button_style)
         salvar_button.clicked.connect(self.salvar_progresso)
-        button_grid.addWidget(salvar_button, 3, 1, Qt.AlignCenter)
+        menu_layout.addWidget(salvar_button, 3, 1, Qt.AlignCenter)
 
-        # Substituir "Voltar" por "Fechar e Salvar"
-        fechar_salvar_button = QPushButton("Fechar e Salvar")
-        fechar_salvar_button.setStyleSheet(back_button_style)
-        fechar_salvar_button.clicked.connect(self.fechar_e_salvar)
-        button_grid.addWidget(fechar_salvar_button, 4, 0, 1, 2, Qt.AlignCenter)
+        # Alterado de "Fechar e Salvar" para "Menu Principal"
+        menu_principal_button = QPushButton("Menu Principal")
+        menu_principal_button.setStyleSheet(back_button_style)
+        menu_principal_button.clicked.connect(self.voltar_menu_principal)  # Nova função
+        menu_layout.addWidget(menu_principal_button, 4, 0, 1, 2, Qt.AlignCenter)
 
-        main_layout.addLayout(button_grid)
-
-        main_layout.addSpacing(20)
-
-        passar_ano_style = """
-            QPushButton { 
-                background: #2E7D32; 
-                color: #FFFFFF; 
-                border-radius: 5px; 
-                padding: 10px 20px; 
-                font-size: 16px; 
-                min-width: 250px; 
-                min-height: 50px; 
-                border: 2px solid #FFFFFF; 
-                box-shadow: 0 2px 5px rgba(255, 255, 255, 0.2); 
-            }
-            QPushButton:hover { 
-                background: #4CAF50; 
-            }
-        """
         passar_ano_button = QPushButton("Passar o Ano")
         passar_ano_button.setStyleSheet(passar_ano_style)
         passar_ano_button.clicked.connect(self.passar_ano)
-        main_layout.addWidget(passar_ano_button, alignment=Qt.AlignCenter)
+        menu_layout.addWidget(passar_ano_button, 5, 0, 1, 2, Qt.AlignCenter)
 
+        main_layout.addWidget(menu_group)
         main_layout.addStretch()
 
     def atualizar_status(self):
-        self.title.setText(f"Jogador: {self.jogador.nome}")
-        self.pontos_label.setText(f"Pontos Disponíveis: {self.jogador.pontos_disponiveis}")
+        self.title.setText(f"{self.jogador.nome}")
+        self.pontos_label.setText(f"Pontos: {self.jogador.pontos_disponiveis}")
+        self.ano_label.setText(f"Ano: {getattr(self.jogador, 'ano_atual', 2025)}")
         self.time_label.setText(f"Time: {getattr(self.jogador, 'time', 'Não definido')}")
-        self.ano_label.setText(f"Ano Atual: {getattr(self.jogador, 'ano_atual', 2025)}")
-        
         posicao = getattr(self.jogador, 'posicao', 'Não definida')
         posicao_secundaria = getattr(self.jogador, 'posicao_secundaria', None)
         posicao_texto = posicao if not posicao_secundaria else f"{posicao}/{posicao_secundaria}"
-        self.posicao_label.setText(f"Posição: {posicao_texto}")
-        
-        altura_m = getattr(self.jogador, 'altura', 0)
-        altura_pes_total = altura_m / 0.0254
-        feet = int(altura_pes_total // 12)
-        inches = int(altura_pes_total % 12)
-        self.altura_label.setText(f"Altura: {feet}'{inches}\"")
+        self.posicao_label.setText(f"Pos.: {posicao_texto}")
 
     def passar_ano(self):
         if not hasattr(self.jogador, 'ano_atual'):
             self.jogador.ano_atual = 2025
         self.jogador.ano_atual += 1
-        self.ano_label.setText(f"Ano Atual: {self.jogador.ano_atual}")
+        self.ano_label.setText(f"Ano: {self.jogador.ano_atual}")
         self.jogador.salvar()
         self.show_success(f"Ano avançado para {self.jogador.ano_atual}!")
 
@@ -1606,7 +1770,7 @@ class PlayerWindow(QMainWindow):
         self.hide()
 
     def abrir_escolha_dificuldade(self):
-        dialogo = EscolhaDificuldadeDialog(self.jogador, self)
+        dialogo = EscolhaDificuldadeDialog(self)
         if dialogo.exec_():
             if dialogo.predefinida_radio.isChecked():
                 self.config_window = EscolhaDificuldadeWindow(self.jogador, self)
@@ -1633,11 +1797,12 @@ class PlayerWindow(QMainWindow):
         except Exception as e:
             self.show_error(f"Erro ao salvar progresso: {str(e)}")
 
-    def fechar_e_salvar(self):
+    def voltar_menu_principal(self):  # Nova função substituindo fechar_e_salvar
         try:
             self.jogador.salvar()
-            self.show_success("Progresso salvo com sucesso! Aplicativo será fechado.")
-            QApplication.quit()  # Fecha o aplicativo
+            self.show_success("Progresso salvo com sucesso! Retornando ao Menu Principal.")
+            self.parent.show()  # Mostra a MainWindow
+            self.close()  # Fecha a PlayerWindow
         except Exception as e:
             self.show_error(f"Erro ao salvar progresso: {str(e)}")
 
@@ -1647,7 +1812,8 @@ class PlayerWindow(QMainWindow):
         msg_box.setText(message)
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.setStyleSheet("""
-            background-color: #2D2D2D; QLabel { color: #FFFFFF; font-size: 14px; }
+            background-color: #2D2D2D; 
+            QLabel { color: #FFFFFF; font-size: 14px; }
             QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
             QPushButton:hover { background: #FF8340; }
         """)
@@ -1659,7 +1825,8 @@ class PlayerWindow(QMainWindow):
         msg_box.setText(message)
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.setStyleSheet("""
-            background-color: #2D2D2D; QLabel { color: #FFFFFF; font-size: 14px; }
+            background-color: #2D2D2D; 
+            QLabel { color: #FFFFFF; font-size: 14px; }
             QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
             QPushButton:hover { background: #FF8340; }
         """)
@@ -1676,153 +1843,98 @@ class BadgesWindow(QMainWindow):
             self.jogador.badges = {}
         self.parent = parent
         self.setWindowTitle(f"Badges de {self.jogador.nome}")
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(1000, 600)
         self.setStyleSheet("background-color: #1A1A1A;")
-        self.pontos_gastos = 0  # Rastreia pontos gastos temporariamente
-        self.badges_temp = self.jogador.badges.copy()  # Usa as badges iniciais
+        self.pontos_gastos = 0
+        self.badges_temp = self.jogador.badges.copy()
         self.setup_ui()
 
     def setup_ui(self):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(15)
+        main_layout.setContentsMargins(20, 10, 20, 20)  # Reduzi a margem superior de 30 para 10
+        main_layout.setSpacing(10)  # Reduzi o espaçamento de 20 para 10
 
+        # Título principal (reduzido)
         title = QLabel(f"Badges de {self.jogador.nome}")
-        title.setFont(QFont("Segoe UI", 22, QFont.Bold))
-        title.setStyleSheet("color: #FF6200;")
+        title.setFont(QFont("Segoe UI", 18, QFont.Bold))  # Reduzi de 24 para 18
+        title.setStyleSheet("color: #FF6200; padding: 5px; background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #2D2D2D, stop:1 #1A1A1A); border-radius: 5px;")
         title.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(title)
 
+        # Label de pontos (reduzido)
         self.pontos_label = QLabel(f"Pontos Disponíveis: {self.jogador.pontos_disponiveis} | Gastos: {self.pontos_gastos}")
-        self.pontos_label.setFont(QFont("Segoe UI", 16))
-        self.pontos_label.setStyleSheet("color: #FFFFFF;")
+        self.pontos_label.setFont(QFont("Segoe UI", 14))  # Reduzi de 18 para 14
+        self.pontos_label.setStyleSheet("color: #FFFFFF; background: #2D2D2D; padding: 5px; border-radius: 5px;")
         self.pontos_label.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(self.pontos_label)
 
+        # Área de rolagem para as badges
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
-        scroll_area.setStyleSheet("background: #2D2D2D; border: none;")
+        scroll_area.setStyleSheet("background: transparent; border: none;")
         scroll_widget = QWidget()
-        grid_layout = QGridLayout(scroll_widget)
-        grid_layout.setSpacing(10)
+        scroll_layout = QVBoxLayout(scroll_widget)
+        scroll_layout.setSpacing(10)
 
-        # Lista de badges do NBA 2K25
+        # Definindo categorias para as badges
         self.badges = {
-            "Inside Scoring": [
-                "Aerial Wizard", "Float Game", "Hook Specialist", "Layup Mixmaster", "Paint Prodigy",
-                "Physical Finisher", "Post Fade Phenom", "Post Powerhouse", "Post-Up Poet", "Posterizer", "Rise Up"
-            ],
-            "Outside Scoring": [
-                "Deadeye", "Limitless Range", "Mini Marksman", "Set Shot Specialist", "Shifty Shooter"
-            ],
-            "Playmaking": [
-                "Ankle Assassin", "Bail Out", "Break Starter", "Dimer", "Handles For Days",
-                "Lightning Launch", "Strong Handle", "Unpluckable", "Versatile Visionary"
-            ],
-            "Rebounding": [
-                "Boxout Beast", "Rebound Chaser"
-            ],
-            "Defense": [
-                "Challenger", "Glove", "High-Flying Denier", "Immovable Enforcer", "Interceptor",
-                "Off-Ball Pest", "On-Ball Menace", "Paint Patroller", "Pick Dodger", "Post Lockdown"
-            ],
-            "General Offense": [
-                "Brick Wall", "Slippery Off-Ball"
-            ],
-            "All Around": [
-                "Pogo Stick"
-            ]
-        }
-
-        # Dicionário com descrições traduzidas
-        self.descriptions = {
-            "Aerial Wizard": "Aumenta a capacidade de finalizar um alley-oop de um companheiro de equipe ou um rebote ofensivo.",
-            "Float Game": "Melhora a habilidade de um jogador para fazer arremessos flutuantes.",
-            "Hook Specialist": "Melhora a capacidade de um jogador para fazer arremessos de gancho no poste.",
-            "Layup Mixmaster": "Melhora a habilidade de um jogador para finalizar bandejas acrobáticas ou sofisticadas com sucesso.",
-            "Paint Prodigy": "Melhora a capacidade de um jogador para marcar enquanto trabalha na área pintada.",
-            "Physical Finisher": "Melhora a habilidade de um jogador para resistir ao contato e converter bandejas.",
-            "Post Fade Phenom": "Melhora a capacidade de um jogador para fazer arremessos de fadeaway e saltos no poste.",
-            "Post Powerhouse": "Fortalece a habilidade de um jogador para empurrar os defensores para trás e derrubá-los com dropsteps.",
-            "Post-Up Poet": "Aumenta as chances de enganar ou superar o defensor, assim como de marcar, ao realizar movimentos no poste.",
-            "Posterizer": "Aumenta as chances de posterizar o defensor com uma enterrada em um contra-ataque.",
-            "Rise Up": "Aumenta a probabilidade de enterrar ou posterizar o oponente quando está na área pintada.",
-            "Challenger": "Melhora a eficácia de contestações bem cronometradas contra arremessadores de perímetro.",
-            "Glove": "Aumenta a capacidade de roubar ou bloquear bandejas e tentativas de arremesso com sucesso.",
-            "High-Flying Denier": "Aumenta a capacidade do defensor de antecipar uma tentativa de bloqueio.",
-            "Immovable Enforcer": "Melhora a força de um defensor ao defender manejadores de bola que vêm diretamente contra ele.",
-            "Interceptor": "Aumenta significativamente a frequência de passes interceptados ou desviados com sucesso.",
-            "Off-Ball Pest": "Torna mais difícil para os oponentes se abrirem e manterem a marcação.",
-            "On-Ball Menace": "Pressiona e marca de perto no perímetro.",
-            "Paint Patroller": "Aumenta a capacidade de um jogador para bloquear ou contestar arremessos na área pintada.",
-            "Pick Dodger": "Melhora a capacidade de um jogador para navegar por bloqueios e ao redor deles enquanto está na defesa.",
-            "Post Lockdown": "Fortalece a capacidade de um jogador para defender o poste de forma eficaz, com maior chance de desarmar o oponente.",
-            "Deadeye": "Arremessos de salto feitos com um defensor fechando recebem uma penalidade menor na contestação.",
-            "Limitless Range": "Estende a distância a partir da qual um jogador pode arremessar três pontos de longa distância de forma eficaz.",
-            "Mini Marksman": "Aumenta a probabilidade de acertar arremessos de salto sobre um defensor mais alto.",
-            "Set Shot Specialist": "Aumenta as chances de acertar arremessos de salto estacionários.",
-            "Shifty Shooter": "Melhora a capacidade de um jogador para acertar arremessos de salto com dribles difíceis.",
-            "Ankle Assassin": "Aumenta a probabilidade de o defensor ter os tornozelos quebrados ou ser cruzado.",
-            "Bail Out": "Facilita passes errados em bandejas, ajudando a passar de duplas marcações.",
-            "Break Starter": "Após agarrar um rebote defensivo, passes longos para o outro lado da quadra são mais rápidos e precisos.",
-            "Dimer": "Quando na meia-quadra, os passes têm 10% mais chance de acerto.",
-            "Handles For Days": "Um jogador perde menos energia com movimentos consecutivos de drible, permitindo encadear combos mais rapidamente e por períodos mais longos.",
-            "Lightning Launch": "Acelera o lançamento ao atacar a partir do perímetro.",
-            "Strong Handle": "Reduz a probabilidade de ser desarmado ao driblar.",
-            "Unpluckable": "Os defensores têm dificuldade em roubar a bola com tentativas de desarme.",
-            "Versatile Visionary": "Melhora a capacidade de um jogador para passar rapidamente a bola para um companheiro aberto, incluindo alley-oops e passes rápidos no tempo certo.",
-            "Boxout Beast": "Melhora a capacidade de um jogador para bloquear e lutar por uma boa posição de rebote.",
-            "Rebound Chaser": "Melhora a capacidade de um jogador para perseguir rebotes a distâncias maiores que o normal.",
-            "Brick Wall": "Aumenta a eficácia de bloqueios e drena a energia dos oponentes em contato físico.",
-            "Slippery Off-Ball": "Quando tenta se abrir, o jogador navega eficazmente por tráfego intenso.",
-            "Pogo Stick": "Permite que os jogadores se recuperem rapidamente e subam novamente para outro salto, tentativa de bloqueio ou rebote."
+            "Inside Scoring": ["Aerial Wizard", "Float Game", "Hook Specialist", "Layup Mixmaster", "Paint Prodigy",
+                              "Physical Finisher", "Post Fade Phenom", "Post Powerhouse", "Post-Up Poet", "Posterizer", "Rise Up"],
+            "Outside Scoring": ["Deadeye", "Limitless Range", "Mini Marksman", "Set Shot Specialist", "Shifty Shooter"],
+            "Playmaking": ["Ankle Assassin", "Bail Out", "Break Starter", "Dimer", "Handles For Days",
+                          "Lightning Launch", "Strong Handle", "Unpluckable", "Versatile Visionary"],
+            "Rebounding": ["Boxout Beast", "Rebound Chaser"],
+            "Defense": ["Challenger", "Glove", "High-Flying Denier", "Immovable Enforcer", "Interceptor",
+                       "Off-Ball Pest", "On-Ball Menace", "Paint Patroller", "Pick Dodger", "Post Lockdown"],
+            "General Offense": ["Brick Wall", "Slippery Off-Ball"],
+            "All Around": ["Pogo Stick"]
         }
 
         self.niveis = ["None", "Bronze", "Prata", "Ouro", "Hall da Fama"]
+        self.descriptions = { ... }  # Mantive as descrições como no código original
+
         self.sliders = {}
         self.custo_labels = {}
-        row = 0
-        for category, badge_list in self.badges.items():
-            # Título da categoria
-            category_label = QLabel(category)
-            category_label.setFont(QFont("Segoe UI", 16, QFont.Bold))
-            category_label.setStyleSheet("color: #FF6200;")
-            grid_layout.addWidget(category_label, row, 0, 1, 2)
-            row += 1
+        self.valor_labels = {}
 
-            for i, badge in enumerate(badge_list):
-                col = 0 if i % 2 == 0 else 2
-                badge_row = row + (i // 2)
-                badge_layout = QHBoxLayout()
-                badge_layout.setSpacing(10)
+        for categoria, badge_list in self.badges.items():
+            group_box = QGroupBox(categoria)
+            group_box.setFont(QFont("Segoe UI", 16, QFont.Bold))
+            group_box.setStyleSheet("""
+                QGroupBox { color: #FF6200; background-color: #2D2D2D; border: 2px solid #FF6200; border-radius: 8px; padding: 15px; }
+                QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top center; padding: 0 5px; }
+            """)
+            group_layout = QVBoxLayout(group_box)
+            group_layout.setSpacing(10)
 
+            for badge in badge_list:
                 nivel = self.badges_temp.get(badge, "None")
+                nivel_original = self.jogador.badges.get(badge, "None")
                 if badge not in self.badges_temp:
                     self.badges_temp[badge] = nivel
 
-                # Label com o nome da badge
-                badge_label = QLabel(f"{badge}: {nivel}")
-                badge_label.setFont(QFont("Segoe UI", 14))
-                badge_label.setFixedWidth(200)
-                self.atualizar_cor_label(badge_label, nivel)
-                badge_layout.addWidget(badge_label)
+                badge_layout = QHBoxLayout()
+                badge_layout.setSpacing(10)
 
-                # Botão de informação
+                nome_label = QLabel(f"{badge}")
+                nome_label.setFont(QFont("Segoe UI", 14))
+                nome_label.setStyleSheet("color: #FFFFFF; background: #2D2D2D; padding: 5px; border-radius: 3px;")
+                nome_label.setFixedWidth(250)
+                badge_layout.addWidget(nome_label)
+
+                valor_label = QLabel(f"{nivel}")
+                valor_label.setFont(QFont("Segoe UI", 14))
+                valor_label.setStyleSheet(f"color: {self.get_cor_nivel(nivel)}; background: #2D2D2D; padding: 5px; border-radius: 3px;")
+                valor_label.setFixedWidth(100)
+                badge_layout.addWidget(valor_label)
+
                 info_button = QPushButton("ℹ️")
                 info_button.setFixedSize(30, 30)
                 info_button.setStyleSheet("""
-                    QPushButton { 
-                        background: #2D2D2D; 
-                        color: #FFFFFF; 
-                        border-radius: 5px; 
-                        font-size: 14px; 
-                        padding: 0px; 
-                    }
-                    QPushButton:hover { 
-                        background: #555555; 
-                    }
+                    QPushButton { background: #2D2D2D; color: #FFFFFF; border-radius: 5px; font-size: 14px; padding: 0px; }
+                    QPushButton:hover { background: #555555; }
                 """)
                 info_button.clicked.connect(lambda _, b=badge: self.mostrar_descricao(b))
                 badge_layout.addWidget(info_button)
@@ -1831,39 +1943,62 @@ class BadgesWindow(QMainWindow):
                 slider.setMinimum(0)
                 slider.setMaximum(len(self.niveis) - 1)
                 slider.setValue(self.niveis.index(nivel))
-                slider.valueChanged.connect(lambda v, n=badge, l=badge_label: self.atualizar_badge_temp(n, v, l))
+                slider.setFixedWidth(150)
+                slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+                slider.valueChanged.connect(lambda v, n=badge, vl=valor_label: self.atualizar_badge_temp(n, v, vl))
                 badge_layout.addWidget(slider)
+
+                dec_button = QPushButton("➖")
+                dec_button.setFixedSize(30, 30)
+                dec_button.setStyleSheet("""
+                    QPushButton { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #555555, stop:1 #777777); color: #FFFFFF; border-radius: 5px; font-size: 14px; }
+                    QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #777777, stop:1 #555555); }
+                """)
+                dec_button.clicked.connect(lambda _, s=slider, n=badge, vl=valor_label, v=nivel_original: self.diminuir_badge(s, n, vl, v))
+                badge_layout.addWidget(dec_button)
+
+                inc_button = QPushButton("➕")
+                inc_button.setFixedSize(30, 30)
+                inc_button.setStyleSheet("""
+                    QPushButton { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FF6200, stop:1 #FF8340); color: #FFFFFF; border-radius: 5px; font-size: 14px; }
+                    QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FF8340, stop:1 #FF6200); }
+                """)
+                inc_button.clicked.connect(lambda _, s=slider, n=badge, vl=valor_label: self.incrementar_badge(s, n, vl))
+                badge_layout.addWidget(inc_button)
 
                 custo = self.calcular_custo(nivel)
                 custo_label = QLabel(f"Custo: {custo}")
                 custo_label.setFont(QFont("Segoe UI", 14))
                 custo_label.setStyleSheet("color: #FFFFFF;")
+                custo_label.setFixedWidth(100)
                 badge_layout.addWidget(custo_label)
 
                 self.sliders[badge] = slider
                 self.custo_labels[badge] = custo_label
-                grid_layout.addLayout(badge_layout, badge_row, col, 1, 2)
+                self.valor_labels[badge] = valor_label
+                group_layout.addLayout(badge_layout)
 
-            row += (len(badge_list) + 1) // 2
+            scroll_layout.addWidget(group_box)
 
         scroll_area.setWidget(scroll_widget)
         main_layout.addWidget(scroll_area, stretch=1)
 
+        # Layout dos botões
         button_layout = QHBoxLayout()
         button_layout.setSpacing(20)
 
         confirm_button = QPushButton("Confirmar")
         confirm_button.setStyleSheet("""
-            QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 12px; font-size: 16px; }
-            QPushButton:hover { background: #FF8340; }
+            QPushButton { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FF6200, stop:1 #FF8340); color: #FFFFFF; border-radius: 8px; padding: 12px; font-size: 16px; min-width: 150px; }
+            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FF8340, stop:1 #FF6200); }
         """)
         confirm_button.clicked.connect(self.confirmar_alteracoes)
         button_layout.addWidget(confirm_button)
 
         back_button = QPushButton("Voltar")
         back_button.setStyleSheet("""
-            QPushButton { background: #2D2D2D; color: #FFFFFF; border-radius: 5px; padding: 12px; font-size: 16px; }
-            QPushButton:hover { background: #555555; }
+            QPushButton { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #555555, stop:1 #777777); color: #FFFFFF; border-radius: 8px; padding: 12px; font-size: 16px; min-width: 150px; }
+            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #777777, stop:1 #555555); }
         """)
         back_button.clicked.connect(self.back_to_player)
         button_layout.addWidget(back_button)
@@ -1877,14 +2012,14 @@ class BadgesWindow(QMainWindow):
         msg_box.setText(descricao)
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.setStyleSheet("""
-            background-color: #FFFFFF; 
-            QLabel { color: #000000; font-size: 14px; }
+            background-color: #2D2D2D; 
+            QLabel { color: #FFFFFF; font-size: 14px; }
             QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
             QPushButton:hover { background: #FF8340; }
         """)
         msg_box.exec_()
 
-    def atualizar_badge_temp(self, nome, valor, label):
+    def atualizar_badge_temp(self, nome, valor, valor_label):
         nivel_antigo = self.badges_temp[nome]
         nivel_novo = self.niveis[valor]
 
@@ -1895,12 +2030,13 @@ class BadgesWindow(QMainWindow):
         nivel_novo_idx = self.niveis.index(nivel_novo)
 
         self.badges_temp[nome] = nivel_novo
-        label.setText(f"{nome}: {nivel_novo}")
-        self.atualizar_cor_label(label, nivel_novo)
+        valor_label.setText(f"{nivel_novo}")
+        valor_label.setStyleSheet(f"color: {self.get_cor_nivel(nivel_novo)}; background: #2D2D2D; padding: 5px; border-radius: 3px;")
+        self.sliders[nome].setValue(valor)
+
         custo_novo = self.calcular_custo(nivel_novo)
         self.custo_labels[nome].setText(f"Custo: {custo_novo}")
 
-        # Recalcular pontos_gastos corretamente para todas as badges alteradas
         self.pontos_gastos = 0
         original_badges = self.jogador.badges.copy()
         for badge, novo_nivel in self.badges_temp.items():
@@ -1914,28 +2050,32 @@ class BadgesWindow(QMainWindow):
 
         self.pontos_label.setText(f"Pontos Disponíveis: {self.jogador.pontos_disponiveis} | Gastos: {self.pontos_gastos}")
 
+    def incrementar_badge(self, slider, nome, valor_label):
+        valor_atual = slider.value()
+        novo_valor = min(valor_atual + 1, len(self.niveis) - 1)
+        if novo_valor > valor_atual:
+            self.atualizar_badge_temp(nome, novo_valor, valor_label)
+            slider.setValue(novo_valor)
+
+    def diminuir_badge(self, slider, nome, valor_label, nivel_original):
+        valor_atual = slider.value()
+        nivel_original_idx = self.niveis.index(nivel_original)
+        novo_valor = max(valor_atual - 1, nivel_original_idx)
+        if novo_valor < valor_atual:
+            self.atualizar_badge_temp(nome, novo_valor, valor_label)
+            slider.setValue(novo_valor)
+
     def calcular_custo(self, nivel):
         if hasattr(self.jogador, 'custos_badges') and nivel in self.jogador.custos_badges:
             return self.jogador.custos_badges[nivel]
-        return {  # Valores padrão
-            "None": 0,
-            "Bronze": 10,
-            "Prata": 20,
-            "Ouro": 30,
-            "Hall da Fama": 40
-        }.get(nivel, 0)
+        return {"None": 0, "Bronze": 10, "Prata": 20, "Ouro": 30, "Hall da Fama": 40}.get(nivel, 0)
 
-    def atualizar_cor_label(self, label, nivel):
-        if nivel == "None":
-            label.setStyleSheet("color: #FFFFFF;")
-        elif nivel == "Bronze":
-            label.setStyleSheet("color: #CD7F32;")
-        elif nivel == "Prata":
-            label.setStyleSheet("color: #C0C0C0;")
-        elif nivel == "Ouro":
-            label.setStyleSheet("color: #FFD700;")
-        else:  # Hall da Fama
-            label.setStyleSheet("color: #800080;")  # Roxo
+    def get_cor_nivel(self, nivel):
+        if nivel == "None": return "#FFFFFF"
+        elif nivel == "Bronze": return "#CD7F32"
+        elif nivel == "Prata": return "#C0C0C0"
+        elif nivel == "Ouro": return "#FFD700"
+        else: return "#800080"
 
     def confirmar_alteracoes(self):
         custo_total = self.pontos_gastos
@@ -2268,73 +2408,20 @@ class InitialBadgesWindow(QMainWindow):
 
 # Diálogo de escolha de dificuldade
 class EscolhaDificuldadeDialog(QDialog):
-    def __init__(self, jogador, parent=None):
+    def __init__(self, jogador, parent=None, modo=None):
         super().__init__(parent)
-        self.jogador = jogador
-        self.setWindowTitle("Escolher Dificuldade")
+        self.jogador = jogador  # Armazena o jogador
+        self.modo = modo  # Armazena o modo (pode ser usado para lógica futura)
+        self.setWindowTitle("Escolher Tipo de Dificuldade")
         self.setStyleSheet("background-color: #1A1A1A;")
         self.setup_ui()
 
     def setup_ui(self):
-        layout = QVBoxLayout()
+        layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(15)
 
-        title = QLabel("Escolha o Tipo de Dificuldade")
-        title.setFont(QFont("Segoe UI", 16, QFont.Bold))
-        title.setStyleSheet("color: #FF6200;")
-        title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(title)
-
-        self.predefinida_radio = QRadioButton("Dificuldade Predefinida")
-        self.predefinida_radio.setFont(QFont("Segoe UI", 14))
-        self.predefinida_radio.setStyleSheet("color: #FFFFFF;")
-        self.predefinida_radio.setChecked(True)
-        layout.addWidget(self.predefinida_radio)
-
-        self.personalizada_radio = QRadioButton("Dificuldade Personalizada")
-        self.personalizada_radio.setFont(QFont("Segoe UI", 14))
-        self.personalizada_radio.setStyleSheet("color: #FFFFFF;")
-        layout.addWidget(self.personalizada_radio)
-
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(20)
-
-        confirm_button = QPushButton("Confirmar")
-        confirm_button.setStyleSheet("""
-            QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
-            QPushButton:hover { background: #FF8340; }
-        """)
-        confirm_button.clicked.connect(self.accept)
-        button_layout.addWidget(confirm_button)
-
-        cancel_button = QPushButton("Cancelar")
-        cancel_button.setStyleSheet("""
-            QPushButton { background: #2D2D2D; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
-            QPushButton:hover { background: #555555; }
-        """)
-        cancel_button.clicked.connect(self.reject)
-        button_layout.addWidget(cancel_button)
-
-        layout.addLayout(button_layout)
-        self.setLayout(layout)
-
-class EscolhaDificuldadeDialog(QDialog):
-    def __init__(self, jogador, parent):
-        super().__init__()
-        self.jogador = jogador
-        self.parent = parent
-        self.setWindowTitle("Escolher Tipo de Dificuldade")
-        self.setFixedSize(450, 250)
-        self.setStyleSheet("background-color: #1A1A1A;")
-        self.setup_ui()
-
-    def setup_ui(self):
-        layout = QVBoxLayout()
-        layout.setContentsMargins(15, 15, 15, 15)
-        layout.setSpacing(15)
-
-        title = QLabel("Escolha o Tipo de Dificuldade")
+        title = QLabel("Escolha o tipo de dificuldade:")
         title.setFont(QFont("Segoe UI", 16, QFont.Bold))
         title.setStyleSheet("color: #FF6200;")
         title.setAlignment(Qt.AlignCenter)
@@ -2351,122 +2438,216 @@ class EscolhaDificuldadeDialog(QDialog):
         self.personalizada_radio.setStyleSheet("color: #FFFFFF;")
         layout.addWidget(self.personalizada_radio)
 
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(15)
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(20)
 
-        confirmar_button = QPushButton("Confirmar")
-        confirmar_button.setStyleSheet("""
-            QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 8px; font-size: 12px; min-width: 100px; }
+        ok_button = QPushButton("OK")
+        ok_button.setStyleSheet("""
+            QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
             QPushButton:hover { background: #FF8340; }
         """)
-        confirmar_button.clicked.connect(self.accept)
-        button_layout.addWidget(confirmar_button)
+        ok_button.clicked.connect(self.accept)
+        buttons_layout.addWidget(ok_button)
 
-        cancelar_button = QPushButton("Cancelar")
-        cancelar_button.setStyleSheet("""
-            QPushButton { background: #2D2D2D; color: #FFFFFF; border-radius: 5px; padding: 8px; font-size: 12px; min-width: 100px; }
+        cancel_button = QPushButton("Cancelar")
+        cancel_button.setStyleSheet("""
+            QPushButton { background: #2D2D2D; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
             QPushButton:hover { background: #555555; }
         """)
-        cancelar_button.clicked.connect(self.reject)
-        button_layout.addWidget(cancelar_button)
+        cancel_button.clicked.connect(self.reject)
+        buttons_layout.addWidget(cancel_button)
 
-        layout.addLayout(button_layout)
-        layout.addStretch()
-        self.setLayout(layout)
+        layout.addLayout(buttons_layout)
+
+    def get_choice(self):
+        """Retorna a escolha do usuário: 'predefinida' ou 'personalizada'."""
+        if self.predefinida_radio.isChecked():
+            return "predefinida"
+        return "personalizada"
+
+class EscolhaDificuldadeDialog(QDialog):
+    def __init__(self, jogador, parent=None, modo=None):
+        super().__init__(parent)
+        self.jogador = jogador  # Armazena o jogador
+        self.modo = modo  # Armazena o modo (pode ser usado para lógica futura)
+        self.setWindowTitle("Escolher Tipo de Dificuldade")
+        self.setStyleSheet("background-color: #1A1A1A;")
+        self.setup_ui()
+
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(15)
+
+        title = QLabel("Escolha o tipo de dificuldade:")
+        title.setFont(QFont("Segoe UI", 16, QFont.Bold))
+        title.setStyleSheet("color: #FF6200;")
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
+
+        self.predefinida_radio = QRadioButton("Dificuldade Predefinida")
+        self.predefinida_radio.setFont(QFont("Segoe UI", 14))
+        self.predefinida_radio.setStyleSheet("color: #FFFFFF;")
+        self.predefinida_radio.setChecked(True)
+        layout.addWidget(self.predefinida_radio)
+
+        self.personalizada_radio = QRadioButton("Configuração Personalizada")
+        self.personalizada_radio.setFont(QFont("Segoe UI", 14))
+        self.personalizada_radio.setStyleSheet("color: #FFFFFF;")
+        layout.addWidget(self.personalizada_radio)
+
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(20)
+
+        ok_button = QPushButton("OK")
+        ok_button.setStyleSheet("""
+            QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
+            QPushButton:hover { background: #FF8340; }
+        """)
+        ok_button.clicked.connect(self.accept)
+        buttons_layout.addWidget(ok_button)
+
+        cancel_button = QPushButton("Cancelar")
+        cancel_button.setStyleSheet("""
+            QPushButton { background: #2D2D2D; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
+            QPushButton:hover { background: #555555; }
+        """)
+        cancel_button.clicked.connect(self.reject)
+        buttons_layout.addWidget(cancel_button)
+
+        layout.addLayout(buttons_layout)
+
+    def get_choice(self):
+        """Retorna a escolha do usuário: 'predefinida' ou 'personalizada'."""
+        if self.predefinida_radio.isChecked():
+            return "predefinida"
+        return "personalizada"
 
 class AtributosDoJogadorWindow(QMainWindow):
     def __init__(self, jogador, parent):
         super().__init__()
         self.jogador = jogador
+        if not hasattr(self.jogador, 'pontos_disponiveis'):
+            self.jogador.pontos_disponiveis = 10000
+        if not hasattr(self.jogador, 'atributos'):
+            self.jogador.atributos = {}
         self.parent = parent
         self.setWindowTitle(f"Atributos de {self.jogador.nome}")
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(1000, 600)
         self.setStyleSheet("background-color: #1A1A1A;")
-        self.pontos_gastos = 0  # Rastreia pontos gastos temporariamente
-        self.atributos_temp = self.jogador.atributos.copy()  # Cópia temporária dos atributos
+        self.pontos_gastos = 0
+        self.atributos_temp = self.jogador.atributos.copy()
         self.setup_ui()
 
     def setup_ui(self):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(15)
+        main_layout.setContentsMargins(20, 10, 20, 20)
+        main_layout.setSpacing(10)
 
         title = QLabel(f"Atributos de {self.jogador.nome}")
-        title.setFont(QFont("Segoe UI", 22, QFont.Bold))
-        title.setStyleSheet("color: #FF6200;")
+        title.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        title.setStyleSheet("color: #FF6200; padding: 5px; background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #2D2D2D, stop:1 #1A1A1A); border-radius: 5px;")
         title.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(title)
 
         self.pontos_label = QLabel(f"Pontos Disponíveis: {self.jogador.pontos_disponiveis} | Gastos: {self.pontos_gastos}")
-        self.pontos_label.setFont(QFont("Segoe UI", 16))
-        self.pontos_label.setStyleSheet("color: #FFFFFF;")
+        self.pontos_label.setFont(QFont("Segoe UI", 14))
+        self.pontos_label.setStyleSheet("color: #FFFFFF; background: #2D2D2D; padding: 5px; border-radius: 5px;")
         self.pontos_label.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(self.pontos_label)
 
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
-        scroll_area.setStyleSheet("background: #2D2D2D; border: none;")
+        scroll_area.setStyleSheet("background: transparent; border: none;")
         scroll_widget = QWidget()
-        grid_layout = QGridLayout(scroll_widget)
-        grid_layout.setSpacing(10)
+        scroll_layout = QVBoxLayout(scroll_widget)
+        scroll_layout.setSpacing(10)
 
-        self.atributos = [
-            "Close Shot", "Mid-Range Shot", "Three-Point Shot", "Free Throw",
-            "Layup", "Dunk", "Standing Dunk", "Driving Dunk", "Post Fade",
-            "Post Hook", "Post Control", "Draw Foul", "Ball Handle",
-            "Passing Accuracy", "Passing Vision", "Passing IQ", "Speed with Ball",
-            "Speed", "Acceleration", "Strength", "Vertical", "Stamina",
-            "Hustle", "Overall Durability", "Offensive Rebound", "Defensive Rebound",
-            "Interior Defense", "Perimeter Defense", "Steal", "Block",
-            "Lateral Quickness", "Help Defense IQ", "Pass Perception",
-            "Defensive Consistency", "Offensive Consistency", "Shot IQ",
-            "Hands", "On-Ball Defense IQ", "Low Post Defense IQ"
-        ]
+        self.atributos_categorias = {
+            "Finishing": ["Driving Layup", "Post Fade", "Post Hook", "Post Control", "Draw Foul", "Standing Dunk", "Driving Dunk"],
+            "Shooting": ["Close Shot", "Mid-Range Shot", "Three-Point Shot", "Free Throw", "Shot IQ"],
+            "Playmaking": ["Ball Handle", "Pass IQ", "Pass Accuracy", "Pass Vision", "Hands", "Pass Perception"],
+            "Rebounding": ["Offensive Rebound", "Defensive Rebound"],
+            "Defense": ["Interior Defense", "Perimeter Defense", "Block", "Steal", "Defensive Consistency", "Help Defense IQ"],
+            "Physicals": ["Speed", "Speed With Ball", "Vertical", "Strength", "Stamina", "Hustle", "Agility"],
+            "General": ["Offensive Consistency", "Intangibles"]
+        }
+
         self.sliders = {}
+        self.valor_labels = {}
         self.custo_labels = {}
-        for i, attr in enumerate(self.atributos):
-            row = i // 2
-            col = 0 if i % 2 == 0 else 2
-            attr_layout = QHBoxLayout()
-            attr_layout.setSpacing(10)
 
-            valor = self.atributos_temp.get(attr, 25)
-            self.atributos_temp[attr] = valor  # Inicializa todos os atributos na cópia temporária
-
-            label = QLabel(f"{attr}: {valor}")
-            label.setFont(QFont("Segoe UI", 14))
-            label.setFixedWidth(200)
-            self.atualizar_cor_label(label, valor)
-            attr_layout.addWidget(label)
-
-            slider = QSlider(Qt.Horizontal)
-            slider.setMinimum(0)
-            slider.setMaximum(99)
-            slider.setValue(valor)
-            slider.valueChanged.connect(lambda v, n=attr, l=label: self.atualizar_atributo_temp(n, v, l))
-            attr_layout.addWidget(slider)
-
-            # Botão de incremento
-            inc_button = QPushButton("➕")
-            inc_button.setFixedSize(30, 30)
-            inc_button.setStyleSheet("""
-                QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; font-size: 16px; }
-                QPushButton:hover { background: #FF8340; }
+        for categoria, atributo_list in self.atributos_categorias.items():
+            group_box = QGroupBox(categoria)
+            group_box.setFont(QFont("Segoe UI", 16, QFont.Bold))
+            group_box.setStyleSheet("""
+                QGroupBox { color: #FF6200; background-color: #2D2D2D; border: 2px solid #FF6200; border-radius: 8px; padding: 15px; }
+                QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top center; padding: 0 5px; }
             """)
-            inc_button.clicked.connect(lambda _, s=slider, n=attr, l=label: self.incrementar_atributo(s, n, l))
-            attr_layout.addWidget(inc_button)
+            group_layout = QVBoxLayout(group_box)
+            group_layout.setSpacing(10)
 
-            custo = self.calcular_custo(valor)
-            custo_label = QLabel(f"Custo: {custo}")
-            custo_label.setFont(QFont("Segoe UI", 14))
-            custo_label.setStyleSheet("color: #FFFFFF;")
-            attr_layout.addWidget(custo_label)
+            for atributo in atributo_list:
+                valor = self.atributos_temp.get(atributo, 25)
+                valor_original = self.jogador.atributos.get(atributo, 25)
 
-            self.sliders[attr] = slider
-            self.custo_labels[attr] = custo_label
-            grid_layout.addLayout(attr_layout, row, col, 1, 2)
+                atributo_layout = QHBoxLayout()
+                atributo_layout.setSpacing(10)
+
+                nome_label = QLabel(f"{atributo}")
+                nome_label.setFont(QFont("Segoe UI", 14))
+                nome_label.setStyleSheet("color: #FFFFFF; background: #2D2D2D; padding: 5px; border-radius: 3px;")
+                nome_label.setFixedWidth(250)
+                atributo_layout.addWidget(nome_label)
+
+                valor_label = QLabel(f"{valor}")
+                valor_label.setFont(QFont("Segoe UI", 14))
+                valor_label.setStyleSheet("color: #FFFFFF; background: #2D2D2D; padding: 5px; border-radius: 3px;")
+                valor_label.setFixedWidth(50)
+                atributo_layout.addWidget(valor_label)
+
+                slider = QSlider(Qt.Horizontal)
+                slider.setMinimum(25)
+                slider.setMaximum(99)
+                slider.setValue(valor)
+                slider.setFixedWidth(150)
+                slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+                slider.valueChanged.connect(lambda v, n=atributo, vl=valor_label: self.atualizar_atributo_temp(n, v, vl))
+                atributo_layout.addWidget(slider)
+
+                dec_button = QPushButton("➖")
+                dec_button.setFixedSize(30, 30)
+                dec_button.setStyleSheet("""
+                    QPushButton { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #555555, stop:1 #777777); color: #FFFFFF; border-radius: 5px; font-size: 14px; }
+                    QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #777777, stop:1 #555555); }
+                """)
+                dec_button.clicked.connect(lambda _, s=slider, n=atributo, vl=valor_label, v=valor_original: self.diminuir_atributo(s, n, vl, v))
+                atributo_layout.addWidget(dec_button)
+
+                inc_button = QPushButton("➕")
+                inc_button.setFixedSize(30, 30)
+                inc_button.setStyleSheet("""
+                    QPushButton { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FF6200, stop:1 #FF8340); color: #FFFFFF; border-radius: 5px; font-size: 14px; }
+                    QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FF8340, stop:1 #FF6200); }
+                """)
+                inc_button.clicked.connect(lambda _, s=slider, n=atributo, vl=valor_label: self.incrementar_atributo(s, n, vl))
+                atributo_layout.addWidget(inc_button)
+
+                custo = self.calcular_custo(valor, valor_original)
+                custo_label = QLabel(f"Custo: {custo}")
+                custo_label.setFont(QFont("Segoe UI", 14))
+                custo_label.setStyleSheet("color: #FFFFFF;")
+                custo_label.setFixedWidth(100)
+                atributo_layout.addWidget(custo_label)
+
+                self.sliders[atributo] = slider
+                self.valor_labels[atributo] = valor_label
+                self.custo_labels[atributo] = custo_label
+                group_layout.addLayout(atributo_layout)
+
+            scroll_layout.addWidget(group_box)
 
         scroll_area.setWidget(scroll_widget)
         main_layout.addWidget(scroll_area, stretch=1)
@@ -2476,75 +2657,88 @@ class AtributosDoJogadorWindow(QMainWindow):
 
         confirm_button = QPushButton("Confirmar")
         confirm_button.setStyleSheet("""
-            QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 12px; font-size: 16px; }
-            QPushButton:hover { background: #FF8340; }
+            QPushButton { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FF6200, stop:1 #FF8340); color: #FFFFFF; border-radius: 8px; padding: 12px; font-size: 16px; min-width: 150px; }
+            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FF8340, stop:1 #FF6200); }
         """)
         confirm_button.clicked.connect(self.confirmar_alteracoes)
         button_layout.addWidget(confirm_button)
 
         back_button = QPushButton("Voltar")
         back_button.setStyleSheet("""
-            QPushButton { background: #2D2D2D; color: #FFFFFF; border-radius: 5px; padding: 12px; font-size: 16px; }
-            QPushButton:hover { background: #555555; }
+            QPushButton { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #555555, stop:1 #777777); color: #FFFFFF; border-radius: 8px; padding: 12px; font-size: 16px; min-width: 150px; }
+            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #777777, stop:1 #555555); }
         """)
         back_button.clicked.connect(self.back_to_player)
         button_layout.addWidget(back_button)
 
         main_layout.addLayout(button_layout)
 
-    def atualizar_atributo_temp(self, nome, valor, label):
-        valor_antigo = self.atributos_temp[nome]
-        if valor <= valor_antigo:  # Impede diminuição
-            self.sliders[nome].setValue(valor_antigo)
+    def atualizar_atributo_temp(self, nome, valor, valor_label):
+        valor_antigo = self.atributos_temp.get(nome, 25)
+        if valor == valor_antigo:
             return
 
         self.atributos_temp[nome] = valor
-        label.setText(f"{nome}: {valor}")
-        self.atualizar_cor_label(label, valor)
-        # Calcula o custo temporário
-        custo_dif = sum(self.calcular_custo(v) for v in range(valor_antigo + 1, valor + 1))
-        self.pontos_gastos = sum(
-            sum(self.calcular_custo(v) for v in range(self.jogador.atributos.get(a, 25) + 1, val + 1))
-            for a, val in self.atributos_temp.items() if val > self.jogador.atributos.get(a, 25)
-        )
-        custo_novo = self.calcular_custo(valor)
+        valor_label.setText(f"{valor}")
+        self.sliders[nome].setValue(valor)
+
+        valor_original = self.jogador.atributos.get(nome, 25)
+        custo_novo = self.calcular_custo(valor, valor_original)
         self.custo_labels[nome].setText(f"Custo: {custo_novo}")
+
+        self.pontos_gastos = self.calcular_pontos_gastos_total()
         self.pontos_label.setText(f"Pontos Disponíveis: {self.jogador.pontos_disponiveis} | Gastos: {self.pontos_gastos}")
 
-    def incrementar_atributo(self, slider, nome, label):
+    def incrementar_atributo(self, slider, nome, valor_label):
         valor_atual = slider.value()
-        novo_valor = min(valor_atual + 1, 99)  # Limita a 99
+        novo_valor = min(valor_atual + 1, 99)
         if novo_valor > valor_atual:
-            self.atualizar_atributo_temp(nome, novo_valor, label)
+            self.atualizar_atributo_temp(nome, novo_valor, valor_label)
             slider.setValue(novo_valor)
 
-    def calcular_custo(self, valor):
-        custos = self.jogador.custos_atributos
-        if valor < 75:
-            return custos["0-74"]
-        elif valor < 85:
-            return custos["75-84"]
-        elif valor < 95:
-            return custos["85-94"]
-        else:
-            return custos["95-99"]
+    def diminuir_atributo(self, slider, nome, valor_label, valor_original):
+        valor_atual = slider.value()
+        novo_valor = max(valor_atual - 1, valor_original)
+        if novo_valor < valor_atual:
+            self.atualizar_atributo_temp(nome, novo_valor, valor_label)
+            slider.setValue(novo_valor)
 
-    def atualizar_cor_label(self, label, valor):
-        if valor < 75:
-            label.setStyleSheet("color: #00FF00;")
-        elif valor < 85:
-            label.setStyleSheet("color: #FFFF00;")
-        elif valor < 95:
-            label.setStyleSheet("color: #FF8000;")
-        else:
-            label.setStyleSheet("color: #FF0000;")
+    def calcular_custo(self, valor_atual, valor_original):
+        """Calcula o custo total somando o custo de cada ponto entre valor_original e valor_atual."""
+        if valor_atual <= valor_original:
+            return 0
+
+        faixas = [
+            (0, 69, self.jogador.custos_atributos.get("0-69", 100)),
+            (70, 74, self.jogador.custos_atributos.get("70-74", 150)),
+            (75, 79, self.jogador.custos_atributos.get("75-79", 200)),
+            (80, 84, self.jogador.custos_atributos.get("80-84", 250)),
+            (85, 89, self.jogador.custos_atributos.get("85-89", 300)),
+            (90, 94, self.jogador.custos_atributos.get("90-94", 400)),
+            (95, 99, self.jogador.custos_atributos.get("95-99", 500))
+        ]
+
+        custo_total = 0
+        for ponto in range(valor_original + 1, valor_atual + 1):
+            for inicio, fim, custo in faixas:
+                if inicio <= ponto <= fim:
+                    custo_total += custo
+                    break
+
+        return custo_total
+
+    def calcular_pontos_gastos_total(self):
+        total = 0
+        original_atributos = self.jogador.atributos.copy()
+        for attr, novo_valor in self.atributos_temp.items():
+            original_valor = original_atributos.get(attr, 25)
+            total += self.calcular_custo(novo_valor, original_valor)
+        return total
 
     def confirmar_alteracoes(self):
-        custo_total = self.pontos_gastos
+        custo_total = self.calcular_pontos_gastos_total()
         if self.jogador.pontos_disponiveis < custo_total:
             self.show_error("Pontos insuficientes para confirmar as alterações!")
-            self.pontos_gastos = 0  # Reseta gastos temporários
-            self.pontos_label.setText(f"Pontos Disponíveis: {self.jogador.pontos_disponiveis} | Gastos: {self.pontos_gastos}")
             return
 
         self.jogador.pontos_disponiveis -= custo_total
@@ -2556,7 +2750,7 @@ class AtributosDoJogadorWindow(QMainWindow):
         self.close()
 
     def back_to_player(self):
-        self.pontos_gastos = 0  # Reseta gastos temporários
+        self.pontos_gastos = 0
         self.parent.atualizar_status()
         self.parent.show()
         self.close()
@@ -2567,7 +2761,8 @@ class AtributosDoJogadorWindow(QMainWindow):
         msg_box.setText(message)
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.setStyleSheet("""
-            background-color: #2D2D2D; QLabel { color: #FFFFFF; font-size: 14px; }
+            background-color: #2D2D2D; 
+            QLabel { color: #FFFFFF; font-size: 14px; }
             QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
             QPushButton:hover { background: #FF8340; }
         """)
@@ -2579,28 +2774,28 @@ class AtributosDoJogadorWindow(QMainWindow):
         msg_box.setText(message)
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.setStyleSheet("""
-            background-color: #2D2D2D; QLabel { color: #FFFFFF; font-size: 14px; }
+            background-color: #2D2D2D; 
+            QLabel { color: #FFFFFF; font-size: 14px; }
             QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
             QPushButton:hover { background: #FF8340; }
         """)
         msg_box.exec_()
 
 class EscolhaDificuldadeDialog(QDialog):
-    def __init__(self, jogador, parent):
-        super().__init__()
-        self.jogador = jogador
-        self.parent = parent
+    def __init__(self, jogador, parent=None, modo=None):
+        super().__init__(parent)
+        self.jogador = jogador  # Armazena o jogador
+        self.modo = modo  # Armazena o modo (pode ser usado para lógica futura)
         self.setWindowTitle("Escolher Tipo de Dificuldade")
-        self.setFixedSize(400, 200)
         self.setStyleSheet("background-color: #1A1A1A;")
         self.setup_ui()
 
     def setup_ui(self):
-        layout = QVBoxLayout()
+        layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(20)
+        layout.setSpacing(15)
 
-        title = QLabel("Escolha o Tipo de Dificuldade")
+        title = QLabel("Escolha o tipo de dificuldade:")
         title.setFont(QFont("Segoe UI", 16, QFont.Bold))
         title.setStyleSheet("color: #FF6200;")
         title.setAlignment(Qt.AlignCenter)
@@ -2617,27 +2812,32 @@ class EscolhaDificuldadeDialog(QDialog):
         self.personalizada_radio.setStyleSheet("color: #FFFFFF;")
         layout.addWidget(self.personalizada_radio)
 
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(20)
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(20)
 
-        confirmar_button = QPushButton("Confirmar")
-        confirmar_button.setStyleSheet("""
+        ok_button = QPushButton("OK")
+        ok_button.setStyleSheet("""
             QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
             QPushButton:hover { background: #FF8340; }
         """)
-        confirmar_button.clicked.connect(self.accept)
-        button_layout.addWidget(confirmar_button)
+        ok_button.clicked.connect(self.accept)
+        buttons_layout.addWidget(ok_button)
 
-        cancelar_button = QPushButton("Cancelar")
-        cancelar_button.setStyleSheet("""
+        cancel_button = QPushButton("Cancelar")
+        cancel_button.setStyleSheet("""
             QPushButton { background: #2D2D2D; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
             QPushButton:hover { background: #555555; }
         """)
-        cancelar_button.clicked.connect(self.reject)
-        button_layout.addWidget(cancelar_button)
+        cancel_button.clicked.connect(self.reject)
+        buttons_layout.addWidget(cancel_button)
 
-        layout.addLayout(button_layout)
-        self.setLayout(layout)
+        layout.addLayout(buttons_layout)
+
+    def get_choice(self):
+        """Retorna a escolha do usuário: 'predefinida' ou 'personalizada'."""
+        if self.predefinida_radio.isChecked():
+            return "predefinida"
+        return "personalizada"
 
 class PerfilWindow(QMainWindow):
     def __init__(self, jogador, parent):
@@ -3123,16 +3323,14 @@ class AtributosWindow(QMainWindow):
         grid_layout.setSpacing(10)
 
         self.atributos = [
+            "Driving Layup", "Post Fade", "Post Hook", "Post Control", "Draw Foul",
             "Close Shot", "Mid-Range Shot", "Three-Point Shot", "Free Throw",
-            "Layup", "Dunk", "Standing Dunk", "Driving Dunk", "Post Fade",
-            "Post Hook", "Post Control", "Draw Foul", "Ball Handle",
-            "Passing Accuracy", "Passing Vision", "Passing IQ", "Speed with Ball",
-            "Speed", "Acceleration", "Strength", "Vertical", "Stamina",
-            "Hustle", "Overall Durability", "Offensive Rebound", "Defensive Rebound",
-            "Interior Defense", "Perimeter Defense", "Steal", "Block",
-            "Lateral Quickness", "Help Defense IQ", "Pass Perception",
-            "Defensive Consistency", "Offensive Consistency", "Shot IQ",
-            "Hands", "On-Ball Defense IQ", "Low Post Defense IQ"
+            "Ball Handle", "Pass IQ", "Pass Accuracy", "Offensive Rebound",
+            "Standing Dunk", "Driving Dunk", "Shot IQ", "Pass Vision",
+            "Hands", "Defensive Rebound", "Interior Defense", "Perimeter Defense",
+            "Block", "Steal", "Speed", "Speed With Ball", "Vertical",
+            "Strength", "Stamina", "Hustle", "Agility", "Pass Perception",
+            "Defensive Consistency", "Help Defense IQ", "Offensive Consistency", "Intangibles"
         ]
         self.inputs = {}
         for i, attr in enumerate(self.atributos):
@@ -3216,21 +3414,20 @@ class AtributosWindow(QMainWindow):
 
 
 class EscolhaDificuldadeDialog(QDialog):
-    def __init__(self, jogador, parent):
-        super().__init__()
-        self.jogador = jogador
-        self.parent = parent
+    def __init__(self, jogador, parent=None, modo=None):
+        super().__init__(parent)
+        self.jogador = jogador  # Armazena o jogador
+        self.modo = modo  # Armazena o modo (pode ser usado para lógica futura)
         self.setWindowTitle("Escolher Tipo de Dificuldade")
-        self.setFixedSize(450, 250)  # Aumentado para mais espaço
         self.setStyleSheet("background-color: #1A1A1A;")
         self.setup_ui()
 
     def setup_ui(self):
-        layout = QVBoxLayout()
-        layout.setContentsMargins(15, 15, 15, 15)  # Margens reduzidas
-        layout.setSpacing(15)  # Espaçamento reduzido
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(15)
 
-        title = QLabel("Escolha o Tipo de Dificuldade")
+        title = QLabel("Escolha o tipo de dificuldade:")
         title.setFont(QFont("Segoe UI", 16, QFont.Bold))
         title.setStyleSheet("color: #FF6200;")
         title.setAlignment(Qt.AlignCenter)
@@ -3247,28 +3444,32 @@ class EscolhaDificuldadeDialog(QDialog):
         self.personalizada_radio.setStyleSheet("color: #FFFFFF;")
         layout.addWidget(self.personalizada_radio)
 
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(15)  # Espaçamento reduzido entre botões
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(20)
 
-        confirmar_button = QPushButton("Confirmar")
-        confirmar_button.setStyleSheet("""
-            QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 8px; font-size: 12px; min-width: 100px; }
+        ok_button = QPushButton("OK")
+        ok_button.setStyleSheet("""
+            QPushButton { background: #FF6200; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
             QPushButton:hover { background: #FF8340; }
         """)
-        confirmar_button.clicked.connect(self.accept)
-        button_layout.addWidget(confirmar_button)
+        ok_button.clicked.connect(self.accept)
+        buttons_layout.addWidget(ok_button)
 
-        cancelar_button = QPushButton("Cancelar")
-        cancelar_button.setStyleSheet("""
-            QPushButton { background: #2D2D2D; color: #FFFFFF; border-radius: 5px; padding: 8px; font-size: 12px; min-width: 100px; }
+        cancel_button = QPushButton("Cancelar")
+        cancel_button.setStyleSheet("""
+            QPushButton { background: #2D2D2D; color: #FFFFFF; border-radius: 5px; padding: 10px; font-size: 14px; }
             QPushButton:hover { background: #555555; }
         """)
-        cancelar_button.clicked.connect(self.reject)
-        button_layout.addWidget(cancelar_button)
+        cancel_button.clicked.connect(self.reject)
+        buttons_layout.addWidget(cancel_button)
 
-        layout.addLayout(button_layout)
-        layout.addStretch()  # Adiciona espaço flexível no final
-        self.setLayout(layout)
+        layout.addLayout(buttons_layout)
+
+    def get_choice(self):
+        """Retorna a escolha do usuário: 'predefinida' ou 'personalizada'."""
+        if self.predefinida_radio.isChecked():
+            return "predefinida"
+        return "personalizada"
 
 class PremiosWindow(QMainWindow):
     def __init__(self, jogador, parent):

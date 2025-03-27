@@ -14,12 +14,22 @@ class Jogador:
         self.estatisticas = {"Pontos": 0, "Assistências": 0, "Rebotes": 0, "Steal": 0, "Block": 0, "Turnover": 0}
         self.pontos_disponiveis = 0
         self.pontos_premios = 1000
-        self.custos_atributos = {"0-74": 1, "75-84": 2, "85-94": 3, "95-99": 5}
+        # Atualização dos custos dos atributos com os novos intervalos e valores
+        self.custos_atributos = {
+            "0-69": 100,
+            "70-74": 150,
+            "75-79": 200,
+            "80-84": 250,
+            "85-89": 300,
+            "90-94": 400,
+            "95-99": 500
+        }
         self.dificuldade = {"Pontos": 10, "Assistências": 10, "Rebotes": 10, "Steal": 15, "Block": 15, "Turnover": -5}
         self.pontos_premios_personalizados = {}
         self.posicoes_compradas_primarias = []  # Inicializa como lista vazia
         self.posicoes_compradas_secundarias = []
 
+    # O restante do código (métodos adicionar_estatisticas, salvar e carregar) permanece igual
     def adicionar_estatisticas(self, pontos, assistencias, rebotes, steals, blocks, turnovers):
         self.estatisticas["Pontos"] += pontos
         self.estatisticas["Assistências"] += assistencias
@@ -67,7 +77,15 @@ class Jogador:
             self.estatisticas = data["estatisticas"]
             self.pontos_disponiveis = data["pontos_disponiveis"]
             self.pontos_premios = data.get("pontos_premios", 1000)
-            self.custos_atributos = data.get("custos_atributos", {"0-74": 1, "75-84": 2, "85-94": 3, "95-99": 5})
+            self.custos_atributos = data.get("custos_atributos", {
+                "0-69": 100,
+                "70-74": 150,
+                "75-79": 200,
+                "80-84": 250,
+                "85-89": 300,
+                "90-94": 400,
+                "95-99": 500
+            })
             self.dificuldade = data.get("dificuldade", {"Pontos": 10, "Assistências": 10, "Rebotes": 10, "Steal": 15, "Block": 15, "Turnover": -5})
             self.pontos_premios_personalizados = data.get("pontos_premios_personalizados", {})
             self.posicoes_compradas_primarias = data.get("posicoes_compradas_primarias", [])
